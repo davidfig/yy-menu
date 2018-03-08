@@ -49,7 +49,7 @@ class MenuItem
                         this.submenuTimeout = setTimeout(() =>
                         {
                             this.submenuTimeout = null
-                            this.submenu.show(this.submenu)
+                            this.submenu.show(this)
                         }, Styles.SubmenuOpenDelay)
                     }
                 }

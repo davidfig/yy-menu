@@ -36,6 +36,21 @@ class Menu
             if (this.menu)
             {
                 this.menu.showAccelerators()
+                if (this.menu.showing && this.menu.children.indexOf(menuItem) !== -1)
+                {
+                    let current = this.menu.showing
+                    if (current.menu.applicationMenu)
+                    {
+                        current.div.style.backgroundColor = 'transparent'
+                    }
+                    while (current && current.submenu)
+                    {
+                        current.submenu.div.remove()
+                        let next = current.submenu.showing
+                        current.submenu.showing = false
+                        current = next
+                    }
+                }
             }
             this.div.remove()
             this.showing = false
@@ -47,27 +62,21 @@ class Menu
                 if (this.menu.showing && this.menu.children.indexOf(menuItem) !== -1)
                 {
                     let current = this.menu.showing
-                    do
+                    if (current.menu.applicationMenu)
                     {
                         current.div.style.backgroundColor = 'transparent'
-                        if (current.submenu)
-                        {
-                            current.submenu.div.remove()
-                            let next = current.submenu.showing
-                            current.submenu.showing = false
-                            current = next
-                        }
-                        else
-                        {
-                            current = null
-                        }
                     }
-                    while (current)
+                    while (current && current.submenu)
+                    {
+                        current.submenu.div.remove()
+                        let next = current.submenu.showing
+                        current.submenu.showing = false
+                        current = next
+                    }
                 }
-                this.menu.showing = menuItem
                 this.menu.hideAccelerators()
+                this.menu.showing = menuItem
             }
-            this.showing = menuItem
             const div = menuItem.div
             const parent = this.menu.div
             if (this.menu.applicationMenu)
