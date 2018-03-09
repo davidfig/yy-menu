@@ -1,4 +1,4 @@
-const Menu = require('../src/menu')
+const Menu = require('../dist/menu')
 const MenuItem = Menu.MenuItem
 
 function test()
