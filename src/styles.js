@@ -1,24 +1,28 @@
-const ApplicationMenuStyle = {
-    'display': 'flex',
-    'flex-direction': 'row',
-    'user-select': 'none',
-    'font-size': '0.85em',
-    'color': 'black',
+const ApplicationContainer = {
     'z-index': 999999,
     'position': 'fixed',
     'top': 0,
     'left': 0,
-    'width': '100vw',
+    'user-select': 'none',
+    'background': 'red',
+    'font-size': '0.85em'
+}
+
+const ApplicationMenuStyle = {
+    'display': 'flex',
+    'flex-direction': 'row',
+    'color': 'black',
     'backgroundColor': 'rgb(230,230,230)',
+    'width': '100vw',
     'border': 'none',
-    'box-shadow': 'unset'
+    'box-shadow': 'unset',
+    'outline': 'none'
 }
 
 const MenuStyle = {
     'flex-direction': 'column',
     'position': 'fixed',
     'user-select': 'none',
-    'font-size': '0.85em',
     'color': 'black',
     'z-index': 999999,
     'backgroundColor': 'white',
@@ -57,6 +61,7 @@ const Overlap = 5
 const SubmenuOpenDelay = 500
 
 module.exports = {
+    ApplicationContainer,
     ApplicationMenuStyle,
     MenuStyle,
     ApplicationMenuRowStyle,

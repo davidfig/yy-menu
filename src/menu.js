@@ -1,6 +1,7 @@
 const Styles =   require('./styles')
 const MenuItem = require('./menuItem')
 const Accelerators = require('./accelerators')
+const html = require('./html')
 
 class Menu
 {
@@ -29,31 +30,31 @@ class Menu
         this.children.push(menuItem)
     }
 
+    hide()
+    {
+        this.menu.showAccelerators()
+        let current = this.menu.showing
+        while (current && current.submenu)
+        {
+            current.div.style.backgroundColor = 'transparent'
+            current.submenu.div.remove()
+            let next = current.submenu.showing
+            if (next)
+            {
+                current.submenu.showing.div.style.backgroundColor = 'transparent'
+                current.submenu.showing = null
+            }
+            current = next
+        }
+        this.menu.showing = null
+        this.div.remove()
+    }
+
     show(menuItem)
     {
-        if (this.showing)
+        if (this.menu && this.menu.showing === menuItem)
         {
-            if (this.menu)
-            {
-                this.menu.showAccelerators()
-                if (this.menu.showing && this.menu.children.indexOf(menuItem) !== -1)
-                {
-                    let current = this.menu.showing
-                    if (current.menu.applicationMenu)
-                    {
-                        current.div.style.backgroundColor = 'transparent'
-                    }
-                    while (current && current.submenu)
-                    {
-                        current.submenu.div.remove()
-                        let next = current.submenu.showing
-                        current.submenu.showing = false
-                        current = next
-                    }
-                }
-            }
-            this.div.remove()
-            this.showing = false
+            this.hide()
         }
         else
         {
@@ -62,20 +63,21 @@ class Menu
                 if (this.menu.showing && this.menu.children.indexOf(menuItem) !== -1)
                 {
                     let current = this.menu.showing
-                    if (current.menu.applicationMenu)
-                    {
-                        current.div.style.backgroundColor = 'transparent'
-                    }
+                    current.div.style.backgroundColor = 'transparent'
                     while (current && current.submenu)
                     {
                         current.submenu.div.remove()
                         let next = current.submenu.showing
-                        current.submenu.showing = false
+                        if (next)
+                        {
+                            current.submenu.showing.div.style.backgroundColor = 'transparent'
+                            current.submenu.showing = false
+                        }
                         current = next
                     }
                 }
-                this.menu.hideAccelerators()
                 this.menu.showing = menuItem
+                this.menu.hideAccelerators()
             }
             const div = menuItem.div
             const parent = this.menu.div
@@ -89,7 +91,8 @@ class Menu
                 this.div.style.left = parent.offsetLeft + parent.offsetWidth - Styles.Overlap + 'px'
                 this.div.style.top = parent.offsetTop + div.offsetTop - Styles.Overlap + 'px'
             }
-            document.body.appendChild(this.div)
+            this.attached = menuItem
+            this.getApplicationDiv().appendChild(this.div)
             let label = 0, accelerator = 0, arrow = 0, checked = 0
             for (let child of this.children)
             {
@@ -133,15 +136,14 @@ class Menu
                     child.arrow.style.width = arrow + 'px'
                 }
             }
-        }
-    }
-
-    hide()
-    {
-        if (!this.applicationMenu)
-        {
-            this.showing = false
-            this.div.remove()
+            if (this.div.offsetLeft + this.div.offsetWidth > window.innerWidth)
+            {
+                this.div.style.left = window.innerWidth - this.div.offsetWidth + 'px'
+            }
+            if (this.div.offsetTop + this.div.offsetHeight > window.innerHeight)
+            {
+                this.div.style.top = window.innerHeight - this.div.offsetHeight + 'px'
+            }
         }
     }
 
@@ -181,8 +183,47 @@ class Menu
         }
     }
 
+    closeAll()
+    {
+        if (this.showing)
+        {
+            let menu = this
+            while (menu.showing)
+            {
+                menu = menu.showing.submenu
+            }
+            while (menu && !menu.applicationMenu)
+            {
+                if (menu.showing)
+                {
+                    menu.showing.div.style.backgroundColor = 'transparent'
+                    menu.showing = null
+                }
+                menu.div.remove()
+                menu = menu.menu
+            }
+            if (menu)
+            {
+                menu.showing.div.style.background = 'transparent'
+                menu.showing = null
+                menu.showAccelerators()
+            }
+        }
+    }
+
+    getApplicationDiv()
+    {
+        let menu = this.menu
+        while (menu && !menu.applicationMenu)
+        {
+            menu = menu.menu
+        }
+        return menu.application
+    }
+
     static SetApplicationMenu(menu)
     {
+        menu.application = html({ parent: document.body, styles: Styles.ApplicationContainer })
         menu.applyStyles(Styles.ApplicationMenuStyle)
         for (let child of menu.children)
         {
@@ -193,8 +234,10 @@ class Menu
             }
             menu.div.appendChild(child.div)
         }
-        document.body.appendChild(menu.div)
+        menu.div.tabIndex = -1
+        menu.application.appendChild(menu.div)
         menu.applicationMenu = true
+        menu.div.addEventListener('blur', () => menu.closeAll())
     }
 }
 

@@ -27,6 +27,7 @@ class MenuItem
         }
         else
         {
+            this.checked = options.checked
             this.createChecked(options.checked)
             this.text = options.label || '&nbsp;&nbsp;&nbsp;'
             this.createShortcut(this.text)
@@ -39,33 +40,37 @@ class MenuItem
             }
             this.applyStyles(Styles.RowStyle)
             clicked(this.div, (e) => this.handleClick(e))
-            this.div.addEventListener('mouseenter', () =>
+            this.div.addEventListener('mouseenter', () => this.mouseenter())
+            this.div.addEventListener('mouseleave', () => this.mouseleave())
+        }
+    }
+
+    mouseenter()
+    {
+        if (!this.submenu || this.menu.showing !== this )
+        {
+            this.div.style.backgroundColor = Styles.SelectedBackground
+            if (this.submenu && !this.menu.applicationMenu)
             {
-                if (!this.submenu || !this.submenu.showing)
+                this.submenuTimeout = setTimeout(() =>
                 {
-                    this.div.style.backgroundColor = Styles.SelectedBackground
-                    if (this.submenu && !this.menu.applicationMenu)
-                    {
-                        this.submenuTimeout = setTimeout(() =>
-                        {
-                            this.submenuTimeout = null
-                            this.submenu.show(this)
-                        }, Styles.SubmenuOpenDelay)
-                    }
-                }
-            })
-            this.div.addEventListener('mouseleave', () =>
+                    this.submenuTimeout = null
+                    this.submenu.show(this)
+                }, Styles.SubmenuOpenDelay)
+            }
+        }
+    }
+
+    mouseleave()
+    {
+        if (!this.submenu || this.menu.showing !== this)
+        {
+            if (this.submenuTimeout)
             {
-                if (!this.submenu || !this.submenu.showing)
-                {
-                    if (this.submenuTimeout)
-                    {
-                        clearTimeout(this.submenuInterval)
-                        this.submenuTimeout = null
-                    }
-                    this.div.style.backgroundColor = 'transparent'
-                }
-            })
+                clearTimeout(this.submenuTimeout)
+                this.submenuTimeout = null
+            }
+            this.div.style.backgroundColor = 'transparent'
         }
     }
 
@@ -153,12 +158,32 @@ class MenuItem
         this.arrow = html({ parent: this.div, html: submenu ? '&#9658;' : '' })
     }
 
+    closeAll()
+    {
+        let menu = this.menu
+        while (menu && !menu.applicationMenu)
+        {
+            menu.showing.div.style.backgroundColor = 'transparent'
+            menu.showing = null
+            menu.div.remove()
+            menu = menu.menu
+        }
+    }
+
     handleClick(e)
     {
         if (this.submenu)
         {
             this.submenu.show(this)
-            this.div.style.backgroundColor = this.submenu.showing ? Styles.SelectedBackground : 'transparent'
+        }
+        else if (this.type === 'checkbox')
+        {
+            this.checked = !this.checked
+            this.check.innerHTML = this.checked ? '&#10004;' : ''
+        }
+        else
+        {
+            this.closeAll()
         }
         if (this.click)
         {

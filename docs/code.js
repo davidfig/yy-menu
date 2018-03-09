@@ -15,18 +15,29 @@ function test()
 
     menu.append(new MenuItem({ label: '&File', submenu: file }))
 
+    const submenu = new Menu()
+    submenu.append(new MenuItem({ label: 'first' }))
+    submenu.append(new MenuItem({ label: 'second' }))
+    submenu.append(new MenuItem({ label: 'third' }))
+    submenu.append(new MenuItem({ label: 'fourth' }))
 
-    const windows = new Menu()
-    windows.append(new MenuItem({ label: 'first window' }))
-    windows.append(new MenuItem({ label: 'second window' }))
-    windows.append(new MenuItem({ label: 'third window' }))
-    windows.append(new MenuItem({ label: 'fourth window' }))
+    const subsubmenu = new Menu()
+    subsubmenu.append(new MenuItem({ label: 'first' }))
+    subsubmenu.append(new MenuItem({ label: 'second' }))
+    submenu.append(new MenuItem({ label: 'sub-submenu', submenu: subsubmenu }))
+
+    const submenu2 = new Menu()
+    submenu2.append(new MenuItem({ label: 'first' }))
+    submenu2.append(new MenuItem({ label: 'second' }))
+    submenu2.append(new MenuItem({ label: 'third' }))
+    submenu2.append(new MenuItem({ label: 'fourth' }))
 
     const view = new Menu()
+    view.append(new MenuItem({ label: 'submenu 1', submenu}))
     view.append(new MenuItem({ label: 'zoom in', accelerator: 'CommandOrControl+='}))
     view.append(new MenuItem({ label: 'zoom out', accelerator: 'CommandOrControl+-'}))
     view.append(new MenuItem({ type: 'separator' }))
-    view.append(new MenuItem({ label: 'frames', submenu: windows }))
+    view.append(new MenuItem({ label: 'submenu 2', submenu: submenu2 }))
     menu.append(new MenuItem({ label: '&View', submenu: view }))
 
     Menu.SetApplicationMenu(menu)
@@ -35,6 +46,6 @@ function test()
 window.onload = function ()
 {
     test()
-    require('fork-me-github')('https://github.com/davidfig/shape-points')
+    require('fork-me-github')('https://github.com/davidfig/menu')
     require('./highlight')()
 }
