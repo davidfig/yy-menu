@@ -41,6 +41,8 @@ function test()
     menu.append(new MenuItem({ label: '&View', submenu: view }))
 
     Menu.SetApplicationMenu(menu)
+
+    // Menu.GlobalAccelarator.register('a', () => console.log('hi'))
 }
 
 window.onload = function ()

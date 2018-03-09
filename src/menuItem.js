@@ -30,7 +30,7 @@ class MenuItem
             this.checked = options.checked
             this.createChecked(options.checked)
             this.text = options.label || '&nbsp;&nbsp;&nbsp;'
-            this.createShortcut(this.text)
+            this.label = html({ parent: this.div })
             this.createAccelerator(options.accelerator)
             this.createSubmenu(options.submenu)
             if (options.submenu)
@@ -99,12 +99,6 @@ class MenuItem
         this.check = html({ parent: this.div, html: checked ? '&#10004;' : '' })
     }
 
-    createShortcut()
-    {
-        this.label = html({ parent: this.div })
-        this.showShortcut()
-    }
-
     showShortcut()
     {
         if (this.type !== 'separator')
@@ -136,6 +130,7 @@ class MenuItem
             {
                 this.label.innerHTML = text
             }
+            this.shortcutAvailable = true
         }
     }
 
@@ -145,6 +140,7 @@ class MenuItem
         {
             const text = this.text.replace('&', '')
             this.label.innerHTML = text
+            this.shortcutAvailable = true
         }
     }
 
@@ -163,10 +159,19 @@ class MenuItem
         let menu = this.menu
         while (menu && !menu.applicationMenu)
         {
-            menu.showing.div.style.backgroundColor = 'transparent'
-            menu.showing = null
+            if (menu.showing)
+            {
+                menu.showing.div.style.backgroundColor = 'transparent'
+                menu.showing = null
+            }
             menu.div.remove()
             menu = menu.menu
+        }
+        if (menu)
+        {
+            menu.showing.div.style.background = 'transparent'
+            menu.showing = null
+            menu.showAccelerators()
         }
     }
 
@@ -174,6 +179,11 @@ class MenuItem
     {
         if (this.submenu)
         {
+            if (this.submenuTimeout)
+            {
+                clearTimeout(this.submenuTimeout)
+                this.submenuTimeout = null
+            }
             this.submenu.show(this)
         }
         else if (this.type === 'checkbox')

@@ -1,1 +1,167 @@
-module.exports = () => { }
+class Accelerators
+{
+    /**
+     * Handles all keyboard input for the menu and user-registered keys registered through Menu.GlobalAccelerator
+     * @param {object} options
+     * @param {HTMLElement} [options.div] used for global accelerators (usually attached to document.body)
+     * @param {Menu} [options.menu] Menu to attach accelerators
+     */
+    constructor(options)
+    {
+        this.menuKeys = {}
+        this.keys = {}
+        if (options.div)
+        {
+            options.div.addEventListener('keydown', (e) => this.keyDown(this, e))
+        }
+        else
+        {
+            options.menu.div.addEventListener('keydown', (e) => this.keyDown(this, e))
+        }
+    }
+
+    /**
+     * Register a shortcut key for use by an open menu
+     * @param {KeyCodes} letter
+     * @param {MenuItem} menuItem
+     * @param {boolean} applicationMenu
+     * @private
+     */
+    registerMenuShortcut(letter, menuItem)
+    {
+        if (letter)
+        {
+            const keyCode = (menuItem.menu.applicationMenu ? 'alt+' : '') + letter
+            this.menuKeys[this.prepareKey(keyCode)] = (e) =>
+            {
+                menuItem.handleClick(e)
+                e.stopPropagation()
+                e.preventDefault()
+            }
+        }
+    }
+
+    /**
+     * Register special shortcut keys for menu
+     * @param {MenuItem} menuItem
+     * @private
+     */
+    registerMenuSpecial(menu)
+    {
+        this.menuKeys['escape'] = () => menu.getApplicationMenu().closeAll()
+        this.menuKeys['enter'] = (e) => menu.enter(e)
+        this.menuKeys['arrowright'] = (e) => menu.move(e, 'right')
+        this.menuKeys['arrowleft'] = (e) => menu.move(e, 'left')
+        this.menuKeys['arrowup'] = (e) => menu.move(e, 'up')
+        this.menuKeys['arrowdown'] = (e) => menu.move(e, 'down')
+    }
+
+    /**
+     * Removes menu shortcuts
+     * @private
+     */
+    unregisterMenuShortcuts()
+    {
+        this.menuKeys = {}
+    }
+
+    /**
+     * Keycodes definition
+     * @typedef {string} KeyCodes
+     * In the form of modifier[+modifier...]+key
+     * For example: ctrl+shift+e
+     * NOTE: Keycodes is case insensitive
+     * Modifiers:
+     *    ctrl, alt, shift, meta,
+     * Keys:
+     *    escape, 0-9, minus, equal, backspace, tab, a-z, backetleft, bracketright, semicolon, quote,
+     *    backquote, backslash, comma, period, slash, numpadmultiply, space, capslock, f1-f24, pause,
+     *    scrolllock, printscreen, home, arrowup, arrowleft, arrowright, arrowdown, pageup, pagedown,
+     *    end, insert, delete, enter, shiftleft, shiftright, ctrlleft, ctrlright, altleft, altright, shiftleft,
+     *    shiftright, numlock, numpad...
+     *    (for OS-specific codes, see https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/code. Note that
+     *    'Digit' and 'Key' are removed from the code to make it easier to type)
+     */
+
+    /**
+     * translate a user-provided keycode
+     * @param {KeyCodes} keyCode
+     * @return {KeyCodes} formatted and sorted keyCode
+     * @private
+     */
+    prepareKey(keyCode)
+    {
+        let modifiers = []
+        let key = ''
+        keyCode = keyCode.toLowerCase()
+        if (keyCode.indexOf('+') !== -1)
+        {
+            const split = keyCode.toLowerCase().split('+')
+            for (let i = 0; i < split.length - 1; i++)
+            {
+                modifiers.push(split[i])
+            }
+            modifiers = modifiers.sort((a, b) => { return a[0] > b[0] ? 1 : a[0] < b[0] ? -1 : 0 })
+            for (let part of modifiers)
+            {
+                key += part + '+'
+            }
+            key += split[split.length - 1]
+        }
+        else
+        {
+            key = keyCode
+        }
+        return key
+    }
+
+    /**
+     * register a key as a global accelerator
+     * @param {KeyCodes} keyCode (e.g., Ctrl+shift+E)
+     * @param {function} callback
+     */
+    register(keyCode, callback)
+    {
+        this.keys[this.prepareKey(keyCode)] = callback
+    }
+
+    keyDown(accelerator, e)
+    {
+        const modifiers = []
+        if (e.altKey)
+        {
+            modifiers.push('alt')
+        }
+        if (e.ctrlKey)
+        {
+            modifiers.push('ctrl')
+        }
+        if (e.metaKey)
+        {
+            modifiers.push('meta')
+        }
+        if (e.shiftKey)
+        {
+            modifiers.push('shift')
+        }
+        let keyCode = ''
+        for (let modifier of modifiers)
+        {
+            keyCode = modifier + '+'
+        }
+        let translate = e.code.toLowerCase()
+        translate = translate.replace('digit', '')
+        translate = translate.replace('key', '')
+        keyCode += translate
+        if (this.menuKeys[keyCode])
+        {
+            this.menuKeys[keyCode](e, this)
+        }
+        else if (this.keys[keyCode])
+        {
+            this.keys[keyCode](e, this)
+        }
+    }
+}
+
+module.exports = Accelerators

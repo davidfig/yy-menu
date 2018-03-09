@@ -3,6 +3,8 @@ const MenuItem = require('./menuItem')
 const Accelerators = require('./accelerators')
 const html = require('./html')
 
+let _accelerator
+
 class Menu
 {
     /**
@@ -27,12 +29,15 @@ class Menu
         }
         menuItem.menu = this
         this.div.appendChild(menuItem.div)
-        this.children.push(menuItem)
+        if (menuItem.type !== 'separator')
+        {
+            this.children.push(menuItem)
+        }
     }
 
     hide()
     {
-        this.menu.showAccelerators()
+        Menu.GlobalAccelarator.unregisterMenuShortcuts()
         let current = this.menu.showing
         while (current && current.submenu)
         {
@@ -48,6 +53,7 @@ class Menu
         }
         this.menu.showing = null
         this.div.remove()
+        this.menu.showAccelerators()
     }
 
     show(menuItem)
@@ -78,6 +84,7 @@ class Menu
                 }
                 this.menu.showing = menuItem
                 this.menu.hideAccelerators()
+                Menu.GlobalAccelarator.unregisterMenuShortcuts()
             }
             const div = menuItem.div
             const parent = this.menu.div
@@ -92,49 +99,41 @@ class Menu
                 this.div.style.top = parent.offsetTop + div.offsetTop - Styles.Overlap + 'px'
             }
             this.attached = menuItem
+            this.showAccelerators()
             this.getApplicationDiv().appendChild(this.div)
             let label = 0, accelerator = 0, arrow = 0, checked = 0
             for (let child of this.children)
             {
-                if (child.type !== 'separator')
+                child.check.style.width = 'auto'
+                child.label.style.width = 'auto'
+                child.accelerator.style.width = 'auto'
+                child.arrow.style.width = 'auto'
+                if (child.type === 'checkbox')
                 {
-                    child.check.style.width = 'auto'
-                    child.label.style.width = 'auto'
-                    child.accelerator.style.width = 'auto'
-                    child.arrow.style.width = 'auto'
-                    if (child.type === 'checkbox')
-                    {
-                        checked = Styles.MinimumColumnWidth
-                    }
-                    if (child.submenu)
-                    {
-                        arrow = Styles.MinimumColumnWidth
-                    }
+                    checked = Styles.MinimumColumnWidth
+                }
+                if (child.submenu)
+                {
+                    arrow = Styles.MinimumColumnWidth
                 }
             }
             for (let child of this.children)
             {
-                if (child.type !== 'separator')
+                const childLabel = child.label.offsetWidth * 2
+                label = childLabel > label ? childLabel : label
+                const childAccelerator = child.accelerator.offsetWidth
+                accelerator = childAccelerator > accelerator ? childAccelerator : accelerator
+                if (child.submenu)
                 {
-                    const childLabel = child.label.offsetWidth * 2
-                    label = childLabel > label ? childLabel : label
-                    const childAccelerator = child.accelerator.offsetWidth
-                    accelerator = childAccelerator > accelerator ? childAccelerator : accelerator
-                    if (child.submenu)
-                    {
-                        arrow = child.arrow.offsetWidth
-                    }
+                    arrow = child.arrow.offsetWidth
                 }
             }
             for (let child of this.children)
             {
-                if (child.type !== 'separator')
-                {
-                    child.check.style.width = checked + 'px'
-                    child.label.style.width = label + 'px'
-                    child.accelerator.style.width = accelerator + 'px'
-                    child.arrow.style.width = arrow + 'px'
-                }
+                child.check.style.width = checked + 'px'
+                child.label.style.width = label + 'px'
+                child.accelerator.style.width = accelerator + 'px'
+                child.arrow.style.width = arrow + 'px'
             }
             if (this.div.offsetLeft + this.div.offsetWidth > window.innerWidth)
             {
@@ -172,6 +171,18 @@ class Menu
         for (let child of this.children)
         {
             child.showShortcut()
+            if (child.type !== 'separator')
+            {
+                const index = child.text.indexOf('&')
+                if (index !== -1)
+                {
+                    Menu.GlobalAccelarator.registerMenuShortcut(child.text[index + 1], child)
+                }
+            }
+        }
+        if (!this.applicationMenu)
+        {
+            Menu.GlobalAccelarator.registerMenuSpecial(this)
         }
     }
 
@@ -211,14 +222,126 @@ class Menu
         }
     }
 
-    getApplicationDiv()
+    getApplicationMenu()
     {
         let menu = this.menu
         while (menu && !menu.applicationMenu)
         {
             menu = menu.menu
         }
-        return menu.application
+        return menu
+    }
+
+    getApplicationDiv()
+    {
+        return this.getApplicationMenu().application
+    }
+
+    /**
+     * move to the next child pane
+     * @parm {string} direction (left or right)
+     */
+    moveChild(direction)
+    {
+        const parent = this.selector.menu.menu
+        let index = parent.children.indexOf(parent.showing)
+        if (direction === 'left')
+        {
+            index--
+            index = (index < 0) ? parent.children.length - 1 : index
+        }
+        else
+        {
+            index++
+            index = (index === parent.children.length) ? 0 : index
+        }
+        parent.children[index].handleClick({})
+        this.selector = null
+    }
+
+    /**
+     * move the selector in the menu
+     * @param {KeyboardEvent} e
+     * @param {string} direction (left, right, up, down)
+     * @private
+     */
+    move(e, direction)
+    {
+        if (this.selector)
+        {
+            this.selector.div.style.backgroundColor = 'transparent'
+            let index = this.children.indexOf(this.selector)
+            if (direction === 'down' || direction === 'up')
+            {
+                if (direction === 'down')
+                {
+                    index++
+                    index = (index === this.children.length) ? 0 : index
+                }
+                else
+                {
+                    index--
+                    index = (index < 0) ? this.children.length - 1 : index
+                }
+                this.selector = this.children[index]
+            }
+            else
+            {
+                if (direction === 'right')
+                {
+                    if (this.selector.submenu)
+                    {
+                        this.selector.handleClick(e)
+                        this.selector = null
+                        e.preventDefault()
+                        return
+                    }
+                    else
+                    {
+                        this.moveChild(direction)
+                        e.preventDefault()
+                        return
+                    }
+                }
+                else if (direction === 'left')
+                {
+                    if (!this.selector.menu.menu.applicationMenu)
+                    {
+                        this.selector.menu.hide()
+                        this.selector = null
+                        e.preventDefault()
+                        return
+                    }
+                    else
+                    {
+                        this.moveChild(direction)
+                        e.preventDefault()
+                        return
+                    }
+                }
+            }
+        }
+        else
+        {
+            if (direction === 'up')
+            {
+                this.selector = this.children[this.children.length - 1]
+            }
+            else
+            {
+                this.selector = this.children[0]
+            }
+        }
+        this.selector.div.style.backgroundColor = Styles.SelectedBackground
+        e.preventDefault()
+    }
+
+    /**
+     * enter the menuItem currently selected (via move)
+     */
+    enter()
+    {
+
     }
 
     static SetApplicationMenu(menu)
@@ -238,6 +361,20 @@ class Menu
         menu.application.appendChild(menu.div)
         menu.applicationMenu = true
         menu.div.addEventListener('blur', () => menu.closeAll())
+        menu.showAccelerators()
+    }
+
+    /**
+     * GlobalAccelerator used by menu and allows user to register accelerators for use throught application
+     * @typedef {Accelerator}
+     */
+    static get GlobalAccelarator()
+    {
+        if (!_accelerator)
+        {
+            _accelerator = new Accelerators({ div: document.body })
+        }
+        return _accelerator
     }
 }
 
