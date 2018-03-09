@@ -1,9 +1,13 @@
 # yy-menu
-WIP for a menu system for web apps inspired by Electron
+WIP for a menu system for web apps inspired by Electron. Also includes an implementation of Accelerators to allow keyboard access to the menu (and global keyboard access across the app).
 
 ## installation
 
     npm i yy-menu
+
+## WIP demo
+
+    
 
 
 ## License  
