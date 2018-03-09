@@ -84,7 +84,7 @@ class Menu
 
     show(menuItem)
     {
-        Menu.GlobalAccelarator.unregisterMenuShortcuts()
+        Menu.GlobalAccelerator.unregisterMenuShortcuts()
         if (this.menu && this.menu.showing === menuItem)
         {
             this.hide()
@@ -193,13 +193,13 @@ class Menu
                 const index = child.text.indexOf('&')
                 if (index !== -1)
                 {
-                    Menu.GlobalAccelarator.registerMenuShortcut(child.text[index + 1], child)
+                    Menu.GlobalAccelerator.registerMenuShortcut(child.text[index + 1], child)
                 }
             }
         }
         if (!this.applicationMenu)
         {
-            Menu.GlobalAccelarator.registerMenuSpecial(this)
+            Menu.GlobalAccelerator.registerMenuSpecial(this)
         }
     }
 
@@ -418,7 +418,7 @@ class Menu
      * GlobalAccelerator used by menu and provides a way to register keyboard accelerators throughout the application
      * @typedef {Accelerator}
      */
-    static get GlobalAccelarator()
+    static get GlobalAccelerator()
     {
         if (!_accelerator)
         {

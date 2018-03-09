@@ -1,4 +1,3 @@
-const clicked = require('clicked')
 const html = require('./html')
 const Styles = require('./styles')
 const Accelerators = require('./accelerators')
@@ -7,8 +6,7 @@ class MenuItem
 {
     /**
      * @param {object} options
-     * @param {ClickCallback} [options.click] callback when MenuItem is clicked
-     * @param {string} [options.label] label for menu entry (may include accelerator by placing & before letter)
+     * @param {string} [options.label] label for menu entry may include accelerator by placing & before letter)
      * @param {string} [options.type] separator, checkbox, or undefined
      * @param {object} [options.styles] additional CSS styles to apply to this MenuItem
      * @param {string} [options.accelerator] see Accelerator for inputs (e.g., ctrl+shift+A)
@@ -40,7 +38,8 @@ class MenuItem
                 this.submenu.applyStyles(Styles.MenuStyle)
             }
             this.applyStyles(Styles.RowStyle)
-            clicked(this.div, (e) => this.handleClick(e))
+            this.div.addEventListener('mousedown', (e) => this.handleClick(e))
+            this.div.addEventListener('touchstart', (e) => this.handleClick(e))
             this.div.addEventListener('mouseenter', () => this.mouseenter())
             this.div.addEventListener('mouseleave', () => this.mouseleave())
         }

@@ -6,7 +6,7 @@ function test()
     const menu = new Menu()
 
     const file = new Menu()
-    file.append(new MenuItem({ label: '&New...', accelerator: 'Control+N' }))
+    file.append(new MenuItem({ label: '&New...', accelerator: 'Control+N', click: () => console.log('new dialog open') }))
     file.append(new MenuItem({ label: '&Save...', accelerator: 'CommandOrControl+S' }))
     file.insert(1, new MenuItem({ label: '&Open...', accelerator: 'CommandOrControl+O' }))
     file.append(new MenuItem({ type: 'separator' }))
