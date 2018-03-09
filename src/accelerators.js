@@ -32,7 +32,7 @@ class Accelerators
         if (letter)
         {
             const keyCode = (menuItem.menu.applicationMenu ? 'alt+' : '') + letter
-            this.menuKeys[this.prepareKey(keyCode)] = (e) =>
+            this.menuKeys[Accelerators.prepareKey(keyCode)] = (e) =>
             {
                 menuItem.handleClick(e)
                 e.stopPropagation()
@@ -72,7 +72,7 @@ class Accelerators
      * For example: ctrl+shift+e
      * NOTE: Keycodes is case insensitive
      * Modifiers:
-     *    ctrl, alt, shift, meta,
+     *    ctrl, alt, shift, meta, (ctrl aliases: command, control, commandorcontrol)
      * Keys:
      *    escape, 0-9, minus, equal, backspace, tab, a-z, backetleft, bracketright, semicolon, quote,
      *    backquote, backslash, comma, period, slash, numpadmultiply, space, capslock, f1-f24, pause,
@@ -89,7 +89,7 @@ class Accelerators
      * @return {KeyCodes} formatted and sorted keyCode
      * @private
      */
-    prepareKey(keyCode)
+    static prepareKey(keyCode)
     {
         let modifiers = []
         let key = ''
@@ -99,7 +99,11 @@ class Accelerators
             const split = keyCode.toLowerCase().split('+')
             for (let i = 0; i < split.length - 1; i++)
             {
-                modifiers.push(split[i])
+                let modifier = split[i]
+                modifier = modifier.replace('commandorcontrol', 'ctrl')
+                modifier = modifier.replace('command', 'ctrl')
+                modifier = modifier.replace('control', 'ctrl')
+                modifiers.push(modifier)
             }
             modifiers = modifiers.sort((a, b) => { return a[0] > b[0] ? 1 : a[0] < b[0] ? -1 : 0 })
             for (let part of modifiers)
@@ -116,13 +120,39 @@ class Accelerators
     }
 
     /**
+     * Make the KeyCode pretty for printing on the menu
+     * @param {KeyCode} keyCode
+     * @return {string}
+     */
+    static prettifyKey(keyCode)
+    {
+        keyCode = Accelerators.prepareKey(keyCode)
+        let key = ''
+        if (keyCode.indexOf('+') !== -1)
+        {
+            const split = keyCode.toLowerCase().split('+')
+            for (let i = 0; i < split.length - 1; i++)
+            {
+                let modifier = split[i]
+                key += modifier[0].toUpperCase() + modifier.substr(1) + '+'
+            }
+            key += split[split.length - 1].toUpperCase()
+        }
+        else
+        {
+            key = keyCode.toUpperCase()
+        }
+        return key
+    }
+
+    /**
      * register a key as a global accelerator
      * @param {KeyCodes} keyCode (e.g., Ctrl+shift+E)
      * @param {function} callback
      */
     register(keyCode, callback)
     {
-        this.keys[this.prepareKey(keyCode)] = callback
+        this.keys[Accelerators.prepareKey(keyCode)] = callback
     }
 
     keyDown(accelerator, e)

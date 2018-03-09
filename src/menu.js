@@ -21,6 +21,10 @@ class Menu
         this.applyStyles(Styles.MenuStyle)
     }
 
+    /**
+     * append a MenuItem to the Menu
+     * @param {MenuItem} menuItem
+     */
     append(menuItem)
     {
         if (menuItem.submenu)
@@ -32,6 +36,32 @@ class Menu
         if (menuItem.type !== 'separator')
         {
             this.children.push(menuItem)
+        }
+    }
+
+    /**
+     * inserts a MenuItem into the Menu
+     * @param {number} pos
+     * @param {MenuItem} menuItem
+     */
+    insert(pos, menuItem)
+    {
+        if (pos >= this.div.childNodes.length)
+        {
+            this.append(menuItem)
+        }
+        else
+        {
+            if (menuItem.submenu)
+            {
+                menuItem.submenu.menu = this
+            }
+            menuItem.menu = this
+            this.div.insertBefore(menuItem.div, this.div.childNodes[pos])
+            if (menuItem.type !== 'separator')
+            {
+                this.children.splice(pos, 0, menuItem)
+            }
         }
     }
 
@@ -343,6 +373,16 @@ class Menu
         {
             this.selector.handleClick(e)
         }
+    }
+
+    /**
+     * array containing the menu's items
+     * @property {MenuItems[]} items
+     * @readonly
+     */
+    get items()
+    {
+        return this.children
     }
 
     static SetApplicationMenu(menu)

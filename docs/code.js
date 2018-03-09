@@ -7,7 +7,7 @@ function test()
 
     const file = new Menu()
     file.append(new MenuItem({ label: '&Save...', accelerator: 'CommandOrControl+S' }))
-    file.append(new MenuItem({ label: '&Open...', accelerator: 'CommandOrControl+O' }))
+    file.insert(0, new MenuItem({ label: '&Open...', accelerator: 'CommandOrControl+O' }))
     file.append(new MenuItem({ type: 'separator' }))
     file.append(new MenuItem({ label: '&Autosave', type: 'checkbox', checked: true }))
     file.append(new MenuItem({ type: 'separator' }))

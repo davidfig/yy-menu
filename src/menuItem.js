@@ -1,16 +1,17 @@
 const clicked = require('clicked')
 const html = require('./html')
 const Styles = require('./styles')
+const Accelerators = require('./accelerators')
 
 class MenuItem
 {
     /**
      * @param {object} options
-     * @param {function} [options.click]
+     * @param {ClickCallback} [options.click]
      * @param {string} [options.label]
      * @param {string} [options.type]
      * @param {object} [options.styles] additional CSS styles to apply to this MenuItem
-     * @param {string} [options.accelerator] see https://electronjs.org/docs/api/accelerator
+     * @param {string} [options.accelerator] see Accelerator for inputs (e.g., ctrl+shift+A)
      * @param {MenuItem} [options.submenu] attach a submenu
      * @param {boolean} [options.checked]
      */
@@ -44,6 +45,12 @@ class MenuItem
             this.div.addEventListener('mouseleave', () => this.mouseleave())
         }
     }
+
+    /**
+     * The click callback
+     * @callback ClickCallback
+     * @param {InputEvent} e
+     */
 
     mouseenter()
     {
@@ -115,7 +122,7 @@ class MenuItem
                     if (letter === '&')
                     {
                         i++
-                        html({ parent: this.label, type: 'span', html: text[i], styles: { textDecoration: 'underline' } })
+                        html({ parent: this.label, type: 'span', html: text[i], styles: Styles.AcceleratorKey })
                         current = html({ parent: this.label, type: 'span' })
                     }
                     else
@@ -146,7 +153,7 @@ class MenuItem
 
     createAccelerator(accelerator)
     {
-        this.accelerator = html({ parent: this.div, html: accelerator ? accelerator :  '', styles: Styles.Accelerator})
+        this.accelerator = html({ parent: this.div, html: accelerator ? Accelerators.prettifyKey(accelerator) :  '', styles: Styles.Accelerator})
     }
 
     createSubmenu(submenu)

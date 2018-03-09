@@ -51,6 +51,11 @@ const Separator = {
     'margin': '0.5em 0'
 }
 
+const AcceleratorKey = {
+    'text-decoration': 'underline',
+    'text-decoration-color': 'rgba(0,0,0,0.5)'
+}
+
 const MinimumColumnWidth = 20
 
 const SelectedBackground = 'rgba(0,0,0,0.1)'
@@ -67,6 +72,7 @@ module.exports = {
     ApplicationMenuRowStyle,
     RowStyle,
     Accelerator,
+    AcceleratorKey,
     Separator,
     MinimumColumnWidth,
     SelectedBackground,
