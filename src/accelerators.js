@@ -66,21 +66,24 @@ class Accelerators
     }
 
     /**
-     * Keycodes definition
-     * @typedef {string} KeyCodes
-     * In the form of modifier[+modifier...]+key
-     * For example: ctrl+shift+e
-     * NOTE: Keycodes is case insensitive
+     * Keycodes definition. In the form of modifier[+modifier...]+key
+     * <p>For example: ctrl+shift+e</p>
+     * <p>KeyCodes are case insensitive (i.e., shift+a is the same as Shift+A)</p>
+     * <pre>
      * Modifiers:
      *    ctrl, alt, shift, meta, (ctrl aliases: command, control, commandorcontrol)
+     * </pre>
+     * <pre>
      * Keys:
      *    escape, 0-9, minus, equal, backspace, tab, a-z, backetleft, bracketright, semicolon, quote,
      *    backquote, backslash, comma, period, slash, numpadmultiply, space, capslock, f1-f24, pause,
      *    scrolllock, printscreen, home, arrowup, arrowleft, arrowright, arrowdown, pageup, pagedown,
      *    end, insert, delete, enter, shiftleft, shiftright, ctrlleft, ctrlright, altleft, altright, shiftleft,
      *    shiftright, numlock, numpad...
-     *    (for OS-specific codes, see https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/code. Note that
-     *    'Digit' and 'Key' are removed from the code to make it easier to type)
+     * </pre>
+     * For OS-specific codes and a more detailed explanation see {@link https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/code}. Also note that 'Digit' and 'Key' are removed from the code to make it easier to type.
+     *
+     * @typedef {string} Accelerators~KeyCodes
      */
 
     /**
@@ -123,6 +126,7 @@ class Accelerators
      * Make the KeyCode pretty for printing on the menu
      * @param {KeyCode} keyCode
      * @return {string}
+     * @private
      */
     static prettifyKey(keyCode)
     {

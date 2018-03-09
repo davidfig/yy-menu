@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>yy-menu API Documentation</title>
+    
+    <meta name="description" content="Documentation for yy-menu library" />
+    
+        <meta name="keywords" content="menu,system,UI,accelerators,Electron,file menu,web app" />
+        <meta name="keyword" content="menu,system,UI,accelerators,Electron,file menu,web app" />
+    
+    
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="scripts/prettify/prettify.js"></script>
+    <script src="scripts/prettify/lang-css.js"></script>
+    <script src="scripts/jquery.min.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link href="https://fonts.googleapis.com/css?family=Libre+Franklin:400,700" rel="stylesheet">
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/bootstrap.min.css">
+    <link type="text/css" rel="stylesheet" href="styles/main.css">
+
+    
+    <script>
+    var config = {"monospaceLinks":false,"cleverLinks":false,"default":{"outputSourceFiles":true},"applicationName":"yy-menu","footer":"by YOPEY YOPEY LLC (yopeyopey.com)","copyright":"Copyright © 2018 YOPEY YOPEY LLC.","meta":{"title":"yy-menu API Documentation","description":"Documentation for yy-menu library","keyword":["menu","system","UI","accelerators","Electron","file menu","web app"]},"matomo":{"url":"https://analytics.yopeyopey.com/piwik/","id":18}};
+    </script>
+    
+
+    
+    <script type="text/javascript">
+    var _paq = _paq || [];
+    _paq.push(['trackPageView']);
+    _paq.push(['enableLinkTracking']);
+    (function() {
+        var u="https://analytics.yopeyopey.com/piwik/";
+        _paq.push(['setTrackerUrl', u+'piwik.php']);
+        _paq.push(['setSiteId', '18']);
+        var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
+        g.type='text/javascript'; g.async=true; g.defer=true; g.src=u+'piwik.js'; s.parentNode.insertBefore(g,s);
+    })();
+    </script>
+    
+</head>
+<body>
+<div id="wrap" class="clearfix">
+    
+<div class="navigation">
+    <h3 class="applicationName"><a href="index.html">yy-menu</a></h3>
+    <button id="menuToggle" class="btn btn-link btn-lg menu-toggle">
+        <span class="glyphicon glyphicon-menu-hamburger"></span>
+    </button>
+    <div class="search">
+        <input id="search" type="text" class="form-control input-md" placeholder="Search...">
+    </div>
+    <ul class="list">
+    
+        
+        <li class="item" data-name="Accelerators">
+            <span class="title  ">
+                
+                <a href="Accelerators.html">Accelerators</a>
+            </span>
+            <ul class="members itemMembers">
+            
+            </ul>
+            <ul class="typedefs itemMembers">
+            
+            <span class="subtitle">Typedefs</span>
+            
+                <li class="parent" data-name="Accelerators~KeyCodes"><a href="Accelerators.html#~KeyCodes">KeyCodes</a></li>
+            
+            </ul>
+            <ul class="typedefs itemMembers">
+            
+            </ul>
+            <ul class="methods itemMembers">
+            
+            <span class="subtitle">Methods</span>
+            
+                <li class="parent  " data-name="Accelerators#register"><a href="Accelerators.html#register">register</a></li>
+            
+            </ul>
+            <ul class="events itemMembers">
+            
+            </ul>
+        </li>
+    
+        
+        <li class="item" data-name="Menu">
+            <span class="title  ">
+                
+                <a href="Menu.html">Menu</a>
+            </span>
+            <ul class="members itemMembers">
+            
+            <span class="subtitle">Members</span>
+            
+                <li class="parent " data-name="Menu#items"><a href="Menu.html#items">items</a></li>
+            
+            </ul>
+            <ul class="typedefs itemMembers">
+            
+            <span class="subtitle">Typedefs</span>
+            
+                <li class="parent" data-name="Menu.GlobalAccelarator"><a href="Menu.html#.GlobalAccelarator">GlobalAccelarator</a></li>
+            
+            </ul>
+            <ul class="typedefs itemMembers">
+            
+            </ul>
+            <ul class="methods itemMembers">
+            
+            <span class="subtitle">Methods</span>
+            
+                <li class="parent  " data-name="Menu#append"><a href="Menu.html#append">append</a></li>
+            
+                <li class="parent  " data-name="Menu#insert"><a href="Menu.html#insert">insert</a></li>
+            
+            </ul>
+            <ul class="events itemMembers">
+            
+            </ul>
+        </li>
+    
+        
+        <li class="item" data-name="MenuItem">
+            <span class="title  ">
+                
+                <a href="MenuItem.html">MenuItem</a>
+            </span>
+            <ul class="members itemMembers">
+            
+            </ul>
+            <ul class="typedefs itemMembers">
+            
+            <span class="subtitle">Typedefs</span>
+            
+                <li class="parent" data-name="MenuItem~ClickCallback"><a href="MenuItem.html#~ClickCallback">ClickCallback</a></li>
+            
+            </ul>
+            <ul class="typedefs itemMembers">
+            
+            </ul>
+            <ul class="methods itemMembers">
+            
+            </ul>
+            <ul class="events itemMembers">
+            
+            </ul>
+        </li>
+    
+    </ul>
+</div>
+    <div class="main">
+        
+        <h1 class="page-title" data-filename="Viewport">Source: menu.js</h1>
+        
+        
+
+
+    
+    <section>
+        <header>
+            <div class="header content-size">
+                <h2>menu.js</h2>
+            </div>
+        </header>
+        <article>
+            <pre id="source-code" class="prettyprint source "><code>const Styles =   require('./styles')
+const MenuItem = require('./menuItem')
+const Accelerators = require('./accelerators')
+const html = require('./html')
+
+let _accelerator
+
+class Menu
+{
+    /**
+     * creates a menu bar
+     * @param {object} [options]
+     * @param {object} [options.styles] additional CSS styles for menu
+     */
+    constructor(options)
+    {
+        options = options || {}
+        this.div = document.createElement('div')
+        this.styles = options.styles
+        this.children = []
+        this.applyStyles(Styles.MenuStyle)
+    }
+
+    /**
+     * append a MenuItem to the Menu
+     * @param {MenuItem} menuItem
+     */
+    append(menuItem)
+    {
+        if (menuItem.submenu)
+        {
+            menuItem.submenu.menu = this
+        }
+        menuItem.menu = this
+        this.div.appendChild(menuItem.div)
+        if (menuItem.type !== 'separator')
+        {
+            this.children.push(menuItem)
+        }
+    }
+
+    /**
+     * inserts a MenuItem into the Menu
+     * @param {number} pos
+     * @param {MenuItem} menuItem
+     */
+    insert(pos, menuItem)
+    {
+        if (pos >= this.div.childNodes.length)
+        {
+            this.append(menuItem)
+        }
+        else
+        {
+            if (menuItem.submenu)
+            {
+                menuItem.submenu.menu = this
+            }
+            menuItem.menu = this
+            this.div.insertBefore(menuItem.div, this.div.childNodes[pos])
+            if (menuItem.type !== 'separator')
+            {
+                this.children.splice(pos, 0, menuItem)
+            }
+        }
+    }
+
+    hide()
+    {
+        let current = this.menu.showing
+        while (current &amp;&amp; current.submenu)
+        {
+            current.div.style.backgroundColor = 'transparent'
+            current.submenu.div.remove()
+            let next = current.submenu.showing
+            if (next)
+            {
+                current.submenu.showing.div.style.backgroundColor = 'transparent'
+                current.submenu.showing = null
+            }
+            current = next
+        }
+    }
+
+    show(menuItem)
+    {
+        Menu.GlobalAccelarator.unregisterMenuShortcuts()
+        if (this.menu &amp;&amp; this.menu.showing === menuItem)
+        {
+            this.hide()
+            this.menu.showing = null
+            this.div.remove()
+            this.menu.showAccelerators()
+        }
+        else
+        {
+            if (this.menu)
+            {
+                if (this.menu.showing &amp;&amp; this.menu.children.indexOf(menuItem) !== -1)
+                {
+                    this.hide()
+                }
+                this.menu.showing = menuItem
+                this.menu.hideAccelerators()
+            }
+            const div = menuItem.div
+            const parent = this.menu.div
+            if (this.menu.applicationMenu)
+            {
+                this.div.style.left = div.offsetLeft + 'px'
+                this.div.style.top = div.offsetTop + div.offsetHeight + 'px'
+            }
+            else
+            {
+                this.div.style.left = parent.offsetLeft + parent.offsetWidth - Styles.Overlap + 'px'
+                this.div.style.top = parent.offsetTop + div.offsetTop - Styles.Overlap + 'px'
+            }
+            this.attached = menuItem
+            this.showAccelerators()
+            this.getApplicationDiv().appendChild(this.div)
+            let label = 0, accelerator = 0, arrow = 0, checked = 0
+            for (let child of this.children)
+            {
+                child.check.style.width = 'auto'
+                child.label.style.width = 'auto'
+                child.accelerator.style.width = 'auto'
+                child.arrow.style.width = 'auto'
+                if (child.type === 'checkbox')
+                {
+                    checked = Styles.MinimumColumnWidth
+                }
+                if (child.submenu)
+                {
+                    arrow = Styles.MinimumColumnWidth
+                }
+            }
+            for (let child of this.children)
+            {
+                const childLabel = child.label.offsetWidth * 2
+                label = childLabel > label ? childLabel : label
+                const childAccelerator = child.accelerator.offsetWidth
+                accelerator = childAccelerator > accelerator ? childAccelerator : accelerator
+                if (child.submenu)
+                {
+                    arrow = child.arrow.offsetWidth
+                }
+            }
+            for (let child of this.children)
+            {
+                child.check.style.width = checked + 'px'
+                child.label.style.width = label + 'px'
+                child.accelerator.style.width = accelerator + 'px'
+                child.arrow.style.width = arrow + 'px'
+            }
+            if (this.div.offsetLeft + this.div.offsetWidth > window.innerWidth)
+            {
+                this.div.style.left = window.innerWidth - this.div.offsetWidth + 'px'
+            }
+            if (this.div.offsetTop + this.div.offsetHeight > window.innerHeight)
+            {
+                this.div.style.top = window.innerHeight - this.div.offsetHeight + 'px'
+            }
+        }
+    }
+
+    applyStyles(base)
+    {
+        const styles = {}
+        for (let style in base)
+        {
+            styles[style] = base[style]
+        }
+        if (this.styles)
+        {
+            for (let style in this.styles)
+            {
+                styles[style] = this.styles[style]
+            }
+        }
+        for (let style in styles)
+        {
+            this.div.style[style] = styles[style]
+        }
+    }
+
+    showAccelerators()
+    {
+        for (let child of this.children)
+        {
+            child.showShortcut()
+            if (child.type !== 'separator')
+            {
+                const index = child.text.indexOf('&amp;')
+                if (index !== -1)
+                {
+                    Menu.GlobalAccelarator.registerMenuShortcut(child.text[index + 1], child)
+                }
+            }
+        }
+        if (!this.applicationMenu)
+        {
+            Menu.GlobalAccelarator.registerMenuSpecial(this)
+        }
+    }
+
+    hideAccelerators()
+    {
+        for (let child of this.children)
+        {
+            child.hideShortcut()
+        }
+    }
+
+    closeAll()
+    {
+        if (this.showing)
+        {
+            let menu = this
+            while (menu.showing)
+            {
+                menu = menu.showing.submenu
+            }
+            while (menu &amp;&amp; !menu.applicationMenu)
+            {
+                if (menu.showing)
+                {
+                    menu.showing.div.style.backgroundColor = 'transparent'
+                    menu.showing = null
+                }
+                menu.div.remove()
+                menu = menu.menu
+            }
+            if (menu)
+            {
+                menu.showing.div.style.background = 'transparent'
+                menu.showing = null
+                menu.showAccelerators()
+            }
+        }
+    }
+
+    getApplicationMenu()
+    {
+        let menu = this.menu
+        while (menu &amp;&amp; !menu.applicationMenu)
+        {
+            menu = menu.menu
+        }
+        return menu
+    }
+
+    getApplicationDiv()
+    {
+        return this.getApplicationMenu().application
+    }
+
+    /**
+     * move to the next child pane
+     * @param {string} direction (left or right)
+     * @private
+     */
+    moveChild(direction)
+    {
+        const parent = this.selector.menu.menu
+        let index = parent.children.indexOf(parent.showing)
+        if (direction === 'left')
+        {
+            index--
+            index = (index &lt; 0) ? parent.children.length - 1 : index
+        }
+        else
+        {
+            index++
+            index = (index === parent.children.length) ? 0 : index
+        }
+        parent.children[index].handleClick({})
+        this.selector = null
+    }
+
+    /**
+     * move if selector exists
+     * @param {MouseEvent} e
+     * @param {string} direction
+     * @private
+     */
+    moveSelector(e, direction)
+    {
+        this.selector.div.style.backgroundColor = 'transparent'
+        let index = this.children.indexOf(this.selector)
+        if (direction === 'down' || direction === 'up')
+        {
+            if (direction === 'down')
+            {
+                index++
+                index = (index === this.children.length) ? 0 : index
+            }
+            else
+            {
+                index--
+                index = (index &lt; 0) ? this.children.length - 1 : index
+            }
+            this.selector = this.children[index]
+        }
+        else
+        {
+            if (direction === 'right')
+            {
+                if (this.selector.submenu)
+                {
+                    this.selector.handleClick(e)
+                    this.selector = null
+                }
+                else
+                {
+                    this.moveChild(direction)
+                }
+            }
+            else if (direction === 'left')
+            {
+                if (!this.selector.menu.menu.applicationMenu)
+                {
+                    this.selector.menu.attached.handleClick(e)
+                    this.selector.menu.menu.selector = this.selector.menu.attached
+                    this.selector = null
+                }
+                else
+                {
+                    this.moveChild(direction)
+                }
+            }
+            e.preventDefault()
+            return true
+        }
+    }
+
+    /**
+     * move the selector in the menu
+     * @param {KeyboardEvent} e
+     * @param {string} direction (left, right, up, down)
+     * @private
+     */
+    move(e, direction)
+    {
+        if (this.selector)
+        {
+            if (this.moveSelector(e, direction))
+            {
+                return
+            }
+        }
+        else
+        {
+            if (direction === 'up')
+            {
+                this.selector = this.children[this.children.length - 1]
+            }
+            else
+            {
+                this.selector = this.children[0]
+            }
+        }
+        this.selector.div.style.backgroundColor = Styles.SelectedBackground
+        e.preventDefault()
+        e.stopPropagation()
+    }
+
+    /**
+     * click the selector with keyboard
+     * @private
+     */
+    enter(e)
+    {
+        if (this.selector)
+        {
+            this.selector.handleClick(e)
+        }
+    }
+
+    /**
+     * array containing the menu's items
+     * @property {MenuItems[]} items
+     * @readonly
+     */
+    get items()
+    {
+        return this.children
+    }
+
+    static SetApplicationMenu(menu)
+    {
+        menu.application = html({ parent: document.body, styles: Styles.ApplicationContainer })
+        menu.applyStyles(Styles.ApplicationMenuStyle)
+        for (let child of menu.children)
+        {
+            child.applyStyles(Styles.ApplicationMenuRowStyle)
+            if (child.arrow)
+            {
+                child.arrow.style.display = 'none'
+            }
+            menu.div.appendChild(child.div)
+        }
+        menu.div.tabIndex = -1
+        menu.application.appendChild(menu.div)
+        menu.applicationMenu = true
+        menu.div.addEventListener('blur', () => menu.closeAll())
+        menu.showAccelerators()
+    }
+
+    /**
+     * GlobalAccelerator used by menu and provides a way to register keyboard accelerators throughout the application
+     * @typedef {Accelerator}
+     */
+    static get GlobalAccelarator()
+    {
+        if (!_accelerator)
+        {
+            _accelerator = new Accelerators({ div: document.body })
+        }
+        return _accelerator
+    }
+}
+
+Menu.MenuItem = MenuItem
+
+module.exports = Menu</code></pre>
+        </article>
+    </section>
+
+
+
+
+
+
+        
+
+        <footer class="content-size">
+            <div class="footer">
+                Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Fri Mar 09 2018 13:36:11 GMT+0800 (DST)
+            </div>
+        </footer>
+    </div>
+</div>
+<script>prettyPrint();</script>
+<script src="scripts/main.js"></script>
+</body>
+</html>

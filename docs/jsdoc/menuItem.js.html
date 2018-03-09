@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>yy-menu API Documentation</title>
+    
+    <meta name="description" content="Documentation for yy-menu library" />
+    
+        <meta name="keywords" content="menu,system,UI,accelerators,Electron,file menu,web app" />
+        <meta name="keyword" content="menu,system,UI,accelerators,Electron,file menu,web app" />
+    
+    
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="scripts/prettify/prettify.js"></script>
+    <script src="scripts/prettify/lang-css.js"></script>
+    <script src="scripts/jquery.min.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link href="https://fonts.googleapis.com/css?family=Libre+Franklin:400,700" rel="stylesheet">
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/bootstrap.min.css">
+    <link type="text/css" rel="stylesheet" href="styles/main.css">
+
+    
+    <script>
+    var config = {"monospaceLinks":false,"cleverLinks":false,"default":{"outputSourceFiles":true},"applicationName":"yy-menu","footer":"by YOPEY YOPEY LLC (yopeyopey.com)","copyright":"Copyright © 2018 YOPEY YOPEY LLC.","meta":{"title":"yy-menu API Documentation","description":"Documentation for yy-menu library","keyword":["menu","system","UI","accelerators","Electron","file menu","web app"]},"matomo":{"url":"https://analytics.yopeyopey.com/piwik/","id":18}};
+    </script>
+    
+
+    
+    <script type="text/javascript">
+    var _paq = _paq || [];
+    _paq.push(['trackPageView']);
+    _paq.push(['enableLinkTracking']);
+    (function() {
+        var u="https://analytics.yopeyopey.com/piwik/";
+        _paq.push(['setTrackerUrl', u+'piwik.php']);
+        _paq.push(['setSiteId', '18']);
+        var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
+        g.type='text/javascript'; g.async=true; g.defer=true; g.src=u+'piwik.js'; s.parentNode.insertBefore(g,s);
+    })();
+    </script>
+    
+</head>
+<body>
+<div id="wrap" class="clearfix">
+    
+<div class="navigation">
+    <h3 class="applicationName"><a href="index.html">yy-menu</a></h3>
+    <button id="menuToggle" class="btn btn-link btn-lg menu-toggle">
+        <span class="glyphicon glyphicon-menu-hamburger"></span>
+    </button>
+    <div class="search">
+        <input id="search" type="text" class="form-control input-md" placeholder="Search...">
+    </div>
+    <ul class="list">
+    
+        
+        <li class="item" data-name="Accelerators">
+            <span class="title  ">
+                
+                <a href="Accelerators.html">Accelerators</a>
+            </span>
+            <ul class="members itemMembers">
+            
+            </ul>
+            <ul class="typedefs itemMembers">
+            
+            <span class="subtitle">Typedefs</span>
+            
+                <li class="parent" data-name="Accelerators~KeyCodes"><a href="Accelerators.html#~KeyCodes">KeyCodes</a></li>
+            
+            </ul>
+            <ul class="typedefs itemMembers">
+            
+            </ul>
+            <ul class="methods itemMembers">
+            
+            <span class="subtitle">Methods</span>
+            
+                <li class="parent  " data-name="Accelerators#register"><a href="Accelerators.html#register">register</a></li>
+            
+            </ul>
+            <ul class="events itemMembers">
+            
+            </ul>
+        </li>
+    
+        
+        <li class="item" data-name="Menu">
+            <span class="title  ">
+                
+                <a href="Menu.html">Menu</a>
+            </span>
+            <ul class="members itemMembers">
+            
+            <span class="subtitle">Members</span>
+            
+                <li class="parent " data-name="Menu#items"><a href="Menu.html#items">items</a></li>
+            
+            </ul>
+            <ul class="typedefs itemMembers">
+            
+            <span class="subtitle">Typedefs</span>
+            
+                <li class="parent" data-name="Menu.GlobalAccelarator"><a href="Menu.html#.GlobalAccelarator">GlobalAccelarator</a></li>
+            
+            </ul>
+            <ul class="typedefs itemMembers">
+            
+            </ul>
+            <ul class="methods itemMembers">
+            
+            <span class="subtitle">Methods</span>
+            
+                <li class="parent  " data-name="Menu#append"><a href="Menu.html#append">append</a></li>
+            
+                <li class="parent  " data-name="Menu#insert"><a href="Menu.html#insert">insert</a></li>
+            
+            </ul>
+            <ul class="events itemMembers">
+            
+            </ul>
+        </li>
+    
+        
+        <li class="item" data-name="MenuItem">
+            <span class="title  ">
+                
+                <a href="MenuItem.html">MenuItem</a>
+            </span>
+            <ul class="members itemMembers">
+            
+            </ul>
+            <ul class="typedefs itemMembers">
+            
+            <span class="subtitle">Typedefs</span>
+            
+                <li class="parent" data-name="MenuItem~ClickCallback"><a href="MenuItem.html#~ClickCallback">ClickCallback</a></li>
+            
+            </ul>
+            <ul class="typedefs itemMembers">
+            
+            </ul>
+            <ul class="methods itemMembers">
+            
+            </ul>
+            <ul class="events itemMembers">
+            
+            </ul>
+        </li>
+    
+    </ul>
+</div>
+    <div class="main">
+        
+        <h1 class="page-title" data-filename="Viewport">Source: menuItem.js</h1>
+        
+        
+
+
+    
+    <section>
+        <header>
+            <div class="header content-size">
+                <h2>menuItem.js</h2>
+            </div>
+        </header>
+        <article>
+            <pre id="source-code" class="prettyprint source "><code>const clicked = require('clicked')
+const html = require('./html')
+const Styles = require('./styles')
+const Accelerators = require('./accelerators')
+
+class MenuItem
+{
+    /**
+     * @param {object} options
+     * @param {ClickCallback} [options.click] callback when MenuItem is clicked
+     * @param {string} [options.label] label for menu entry (may include accelerator by placing &amp; before letter)
+     * @param {string} [options.type] separator, checkbox, or undefined
+     * @param {object} [options.styles] additional CSS styles to apply to this MenuItem
+     * @param {string} [options.accelerator] see Accelerator for inputs (e.g., ctrl+shift+A)
+     * @param {MenuItem} [options.submenu] attaches a submenu (and changes type to submenu)
+     * @param {boolean} [options.checked] check the checkbox
+     */
+    constructor(options)
+    {
+        options = options || {}
+        this.styles = options.styles
+        this.div = html()
+        this.type = options.type
+        this.click = options.click
+        if (this.type === 'separator')
+        {
+            this.applyStyles(Styles.Separator)
+        }
+        else
+        {
+            this.checked = options.checked
+            this.createChecked(options.checked)
+            this.text = options.label || '&amp;nbsp;&amp;nbsp;&amp;nbsp;'
+            this.label = html({ parent: this.div })
+            this.createAccelerator(options.accelerator)
+            this.createSubmenu(options.submenu)
+            if (options.submenu)
+            {
+                this.submenu = options.submenu
+                this.submenu.applyStyles(Styles.MenuStyle)
+            }
+            this.applyStyles(Styles.RowStyle)
+            clicked(this.div, (e) => this.handleClick(e))
+            this.div.addEventListener('mouseenter', () => this.mouseenter())
+            this.div.addEventListener('mouseleave', () => this.mouseleave())
+        }
+    }
+
+    /**
+     * The click callback
+     * @callback MenuItem~ClickCallback
+     * @param {InputEvent} e
+     */
+
+    mouseenter()
+    {
+        if (!this.submenu || this.menu.showing !== this )
+        {
+            this.div.style.backgroundColor = Styles.SelectedBackground
+            if (this.submenu &amp;&amp; !this.menu.applicationMenu)
+            {
+                this.submenuTimeout = setTimeout(() =>
+                {
+                    this.submenuTimeout = null
+                    this.submenu.show(this)
+                }, Styles.SubmenuOpenDelay)
+            }
+        }
+    }
+
+    mouseleave()
+    {
+        if (!this.submenu || this.menu.showing !== this)
+        {
+            if (this.submenuTimeout)
+            {
+                clearTimeout(this.submenuTimeout)
+                this.submenuTimeout = null
+            }
+            this.div.style.backgroundColor = 'transparent'
+        }
+    }
+
+    applyStyles(base)
+    {
+        const styles = {}
+        for (let style in base)
+        {
+            styles[style] = base[style]
+        }
+        if (this.styles)
+        {
+            for (let style in this.styles)
+            {
+                styles[style] = this.styles[style]
+            }
+        }
+        for (let style in styles)
+        {
+            this.div.style[style] = styles[style]
+        }
+    }
+
+    createChecked(checked)
+    {
+        this.check = html({ parent: this.div, html: checked ? '&amp;#10004;' : '' })
+    }
+
+    showShortcut()
+    {
+        if (this.type !== 'separator')
+        {
+            this.label.innerHTML = ''
+            const text = this.text
+            let current = html({ parent: this.label, type: 'span' })
+            if (text.indexOf('&amp;') !== -1)
+            {
+                let i = 0
+                do
+                {
+                    const letter = text[i]
+                    if (letter === '&amp;')
+                    {
+                        i++
+                        html({ parent: this.label, type: 'span', html: text[i], styles: Styles.AcceleratorKey })
+                        current = html({ parent: this.label, type: 'span' })
+                    }
+                    else
+                    {
+                        current.innerHTML += letter
+                    }
+                    i++
+                }
+                while (i &lt; text.length)
+            }
+            else
+            {
+                this.label.innerHTML = text
+            }
+            this.shortcutAvailable = true
+        }
+    }
+
+    hideShortcut()
+    {
+        if (this.type !== 'separator')
+        {
+            const text = this.text.replace('&amp;', '')
+            this.label.innerHTML = text
+            this.shortcutAvailable = true
+        }
+    }
+
+    createAccelerator(accelerator)
+    {
+        this.accelerator = html({ parent: this.div, html: accelerator ? Accelerators.prettifyKey(accelerator) :  '', styles: Styles.Accelerator})
+    }
+
+    createSubmenu(submenu)
+    {
+        this.arrow = html({ parent: this.div, html: submenu ? '&amp;#9658;' : '' })
+    }
+
+    closeAll()
+    {
+        let menu = this.menu
+        while (menu &amp;&amp; !menu.applicationMenu)
+        {
+            if (menu.showing)
+            {
+                menu.showing.div.style.backgroundColor = 'transparent'
+                menu.showing = null
+            }
+            menu.div.remove()
+            menu = menu.menu
+        }
+        if (menu)
+        {
+            menu.showing.div.style.background = 'transparent'
+            menu.showing = null
+            menu.showAccelerators()
+        }
+    }
+
+    handleClick(e)
+    {
+        if (this.submenu)
+        {
+            if (this.submenuTimeout)
+            {
+                clearTimeout(this.submenuTimeout)
+                this.submenuTimeout = null
+            }
+            this.submenu.show(this)
+            this.div.style.backgroundColor = Styles.SelectedBackground
+        }
+        else if (this.type === 'checkbox')
+        {
+            this.checked = !this.checked
+            this.check.innerHTML = this.checked ? '&amp;#10004;' : ''
+        }
+        else
+        {
+            this.closeAll()
+        }
+        if (this.click)
+        {
+            this.click(e, this)
+        }
+    }
+}
+
+module.exports = MenuItem</code></pre>
+        </article>
+    </section>
+
+
+
+
+
+
+        
+
+        <footer class="content-size">
+            <div class="footer">
+                Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Fri Mar 09 2018 13:36:11 GMT+0800 (DST)
+            </div>
+        </footer>
+    </div>
+</div>
+<script>prettyPrint();</script>
+<script src="scripts/main.js"></script>
+</body>
+</html>

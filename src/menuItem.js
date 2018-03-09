@@ -7,13 +7,13 @@ class MenuItem
 {
     /**
      * @param {object} options
-     * @param {ClickCallback} [options.click]
-     * @param {string} [options.label]
-     * @param {string} [options.type]
+     * @param {ClickCallback} [options.click] callback when MenuItem is clicked
+     * @param {string} [options.label] label for menu entry (may include accelerator by placing & before letter)
+     * @param {string} [options.type] separator, checkbox, or undefined
      * @param {object} [options.styles] additional CSS styles to apply to this MenuItem
      * @param {string} [options.accelerator] see Accelerator for inputs (e.g., ctrl+shift+A)
-     * @param {MenuItem} [options.submenu] attach a submenu
-     * @param {boolean} [options.checked]
+     * @param {MenuItem} [options.submenu] attaches a submenu (and changes type to submenu)
+     * @param {boolean} [options.checked] check the checkbox
      */
     constructor(options)
     {
@@ -48,7 +48,7 @@ class MenuItem
 
     /**
      * The click callback
-     * @callback ClickCallback
+     * @callback MenuItem~ClickCallback
      * @param {InputEvent} e
      */
 

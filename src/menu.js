@@ -10,7 +10,7 @@ class Menu
     /**
      * creates a menu bar
      * @param {object} [options]
-     * @param {object} [options.styles] additional styles for menu
+     * @param {object} [options.styles] additional CSS styles for menu
      */
     constructor(options)
     {
@@ -256,7 +256,8 @@ class Menu
 
     /**
      * move to the next child pane
-     * @parm {string} direction (left or right)
+     * @param {string} direction (left or right)
+     * @private
      */
     moveChild(direction)
     {
@@ -406,7 +407,7 @@ class Menu
     }
 
     /**
-     * GlobalAccelerator used by menu and allows user to register accelerators for use throught application
+     * GlobalAccelerator used by menu and provides a way to register keyboard accelerators throughout the application
      * @typedef {Accelerator}
      */
     static get GlobalAccelarator()

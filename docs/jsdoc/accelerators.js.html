@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>yy-menu API Documentation</title>
+    
+    <meta name="description" content="Documentation for yy-menu library" />
+    
+        <meta name="keywords" content="menu,system,UI,accelerators,Electron,file menu,web app" />
+        <meta name="keyword" content="menu,system,UI,accelerators,Electron,file menu,web app" />
+    
+    
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="scripts/prettify/prettify.js"></script>
+    <script src="scripts/prettify/lang-css.js"></script>
+    <script src="scripts/jquery.min.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link href="https://fonts.googleapis.com/css?family=Libre+Franklin:400,700" rel="stylesheet">
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/bootstrap.min.css">
+    <link type="text/css" rel="stylesheet" href="styles/main.css">
+
+    
+    <script>
+    var config = {"monospaceLinks":false,"cleverLinks":false,"default":{"outputSourceFiles":true},"applicationName":"yy-menu","footer":"by YOPEY YOPEY LLC (yopeyopey.com)","copyright":"Copyright © 2018 YOPEY YOPEY LLC.","meta":{"title":"yy-menu API Documentation","description":"Documentation for yy-menu library","keyword":["menu","system","UI","accelerators","Electron","file menu","web app"]},"matomo":{"url":"https://analytics.yopeyopey.com/piwik/","id":18}};
+    </script>
+    
+
+    
+    <script type="text/javascript">
+    var _paq = _paq || [];
+    _paq.push(['trackPageView']);
+    _paq.push(['enableLinkTracking']);
+    (function() {
+        var u="https://analytics.yopeyopey.com/piwik/";
+        _paq.push(['setTrackerUrl', u+'piwik.php']);
+        _paq.push(['setSiteId', '18']);
+        var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
+        g.type='text/javascript'; g.async=true; g.defer=true; g.src=u+'piwik.js'; s.parentNode.insertBefore(g,s);
+    })();
+    </script>
+    
+</head>
+<body>
+<div id="wrap" class="clearfix">
+    
+<div class="navigation">
+    <h3 class="applicationName"><a href="index.html">yy-menu</a></h3>
+    <button id="menuToggle" class="btn btn-link btn-lg menu-toggle">
+        <span class="glyphicon glyphicon-menu-hamburger"></span>
+    </button>
+    <div class="search">
+        <input id="search" type="text" class="form-control input-md" placeholder="Search...">
+    </div>
+    <ul class="list">
+    
+        
+        <li class="item" data-name="Accelerators">
+            <span class="title  ">
+                
+                <a href="Accelerators.html">Accelerators</a>
+            </span>
+            <ul class="members itemMembers">
+            
+            </ul>
+            <ul class="typedefs itemMembers">
+            
+            <span class="subtitle">Typedefs</span>
+            
+                <li class="parent" data-name="Accelerators~KeyCodes"><a href="Accelerators.html#~KeyCodes">KeyCodes</a></li>
+            
+            </ul>
+            <ul class="typedefs itemMembers">
+            
+            </ul>
+            <ul class="methods itemMembers">
+            
+            <span class="subtitle">Methods</span>
+            
+                <li class="parent  " data-name="Accelerators#register"><a href="Accelerators.html#register">register</a></li>
+            
+            </ul>
+            <ul class="events itemMembers">
+            
+            </ul>
+        </li>
+    
+        
+        <li class="item" data-name="Menu">
+            <span class="title  ">
+                
+                <a href="Menu.html">Menu</a>
+            </span>
+            <ul class="members itemMembers">
+            
+            <span class="subtitle">Members</span>
+            
+                <li class="parent " data-name="Menu#items"><a href="Menu.html#items">items</a></li>
+            
+            </ul>
+            <ul class="typedefs itemMembers">
+            
+            <span class="subtitle">Typedefs</span>
+            
+                <li class="parent" data-name="Menu.GlobalAccelarator"><a href="Menu.html#.GlobalAccelarator">GlobalAccelarator</a></li>
+            
+            </ul>
+            <ul class="typedefs itemMembers">
+            
+            </ul>
+            <ul class="methods itemMembers">
+            
+            <span class="subtitle">Methods</span>
+            
+                <li class="parent  " data-name="Menu#append"><a href="Menu.html#append">append</a></li>
+            
+                <li class="parent  " data-name="Menu#insert"><a href="Menu.html#insert">insert</a></li>
+            
+            </ul>
+            <ul class="events itemMembers">
+            
+            </ul>
+        </li>
+    
+        
+        <li class="item" data-name="MenuItem">
+            <span class="title  ">
+                
+                <a href="MenuItem.html">MenuItem</a>
+            </span>
+            <ul class="members itemMembers">
+            
+            </ul>
+            <ul class="typedefs itemMembers">
+            
+            <span class="subtitle">Typedefs</span>
+            
+                <li class="parent" data-name="MenuItem~ClickCallback"><a href="MenuItem.html#~ClickCallback">ClickCallback</a></li>
+            
+            </ul>
+            <ul class="typedefs itemMembers">
+            
+            </ul>
+            <ul class="methods itemMembers">
+            
+            </ul>
+            <ul class="events itemMembers">
+            
+            </ul>
+        </li>
+    
+    </ul>
+</div>
+    <div class="main">
+        
+        <h1 class="page-title" data-filename="Viewport">Source: accelerators.js</h1>
+        
+        
+
+
+    
+    <section>
+        <header>
+            <div class="header content-size">
+                <h2>accelerators.js</h2>
+            </div>
+        </header>
+        <article>
+            <pre id="source-code" class="prettyprint source "><code>class Accelerators
+{
+    /**
+     * Handles all keyboard input for the menu and user-registered keys registered through Menu.GlobalAccelerator
+     * @param {object} options
+     * @param {HTMLElement} [options.div] used for global accelerators (usually attached to document.body)
+     * @param {Menu} [options.menu] Menu to attach accelerators
+     */
+    constructor(options)
+    {
+        this.menuKeys = {}
+        this.keys = {}
+        if (options.div)
+        {
+            options.div.addEventListener('keydown', (e) => this.keyDown(this, e))
+        }
+        else
+        {
+            options.menu.div.addEventListener('keydown', (e) => this.keyDown(this, e))
+        }
+    }
+
+    /**
+     * Register a shortcut key for use by an open menu
+     * @param {KeyCodes} letter
+     * @param {MenuItem} menuItem
+     * @param {boolean} applicationMenu
+     * @private
+     */
+    registerMenuShortcut(letter, menuItem)
+    {
+        if (letter)
+        {
+            const keyCode = (menuItem.menu.applicationMenu ? 'alt+' : '') + letter
+            this.menuKeys[Accelerators.prepareKey(keyCode)] = (e) =>
+            {
+                menuItem.handleClick(e)
+                e.stopPropagation()
+                e.preventDefault()
+            }
+        }
+    }
+
+    /**
+     * Register special shortcut keys for menu
+     * @param {MenuItem} menuItem
+     * @private
+     */
+    registerMenuSpecial(menu)
+    {
+        this.menuKeys['escape'] = () => menu.getApplicationMenu().closeAll()
+        this.menuKeys['enter'] = (e) => menu.enter(e)
+        this.menuKeys['arrowright'] = (e) => menu.move(e, 'right')
+        this.menuKeys['arrowleft'] = (e) => menu.move(e, 'left')
+        this.menuKeys['arrowup'] = (e) => menu.move(e, 'up')
+        this.menuKeys['arrowdown'] = (e) => menu.move(e, 'down')
+    }
+
+    /**
+     * Removes menu shortcuts
+     * @private
+     */
+    unregisterMenuShortcuts()
+    {
+        this.menuKeys = {}
+    }
+
+    /**
+     * Keycodes definition. In the form of modifier[+modifier...]+key
+     * &lt;p>For example: ctrl+shift+e&lt;/p>
+     * &lt;p>KeyCodes are case insensitive (i.e., shift+a is the same as Shift+A)&lt;/p>
+     * &lt;pre>
+     * Modifiers:
+     *    ctrl, alt, shift, meta, (ctrl aliases: command, control, commandorcontrol)
+     * &lt;/pre>
+     * &lt;pre>
+     * Keys:
+     *    escape, 0-9, minus, equal, backspace, tab, a-z, backetleft, bracketright, semicolon, quote,
+     *    backquote, backslash, comma, period, slash, numpadmultiply, space, capslock, f1-f24, pause,
+     *    scrolllock, printscreen, home, arrowup, arrowleft, arrowright, arrowdown, pageup, pagedown,
+     *    end, insert, delete, enter, shiftleft, shiftright, ctrlleft, ctrlright, altleft, altright, shiftleft,
+     *    shiftright, numlock, numpad...
+     * &lt;/pre>
+     * For OS-specific codes and a more detailed explanation see {@link https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/code}. Also note that 'Digit' and 'Key' are removed from the code to make it easier to type)
+     *
+     * @typedef {string} Accelerators~KeyCodes
+     */
+
+    /**
+     * translate a user-provided keycode
+     * @param {KeyCodes} keyCode
+     * @return {KeyCodes} formatted and sorted keyCode
+     * @private
+     */
+    static prepareKey(keyCode)
+    {
+        let modifiers = []
+        let key = ''
+        keyCode = keyCode.toLowerCase()
+        if (keyCode.indexOf('+') !== -1)
+        {
+            const split = keyCode.toLowerCase().split('+')
+            for (let i = 0; i &lt; split.length - 1; i++)
+            {
+                let modifier = split[i]
+                modifier = modifier.replace('commandorcontrol', 'ctrl')
+                modifier = modifier.replace('command', 'ctrl')
+                modifier = modifier.replace('control', 'ctrl')
+                modifiers.push(modifier)
+            }
+            modifiers = modifiers.sort((a, b) => { return a[0] > b[0] ? 1 : a[0] &lt; b[0] ? -1 : 0 })
+            for (let part of modifiers)
+            {
+                key += part + '+'
+            }
+            key += split[split.length - 1]
+        }
+        else
+        {
+            key = keyCode
+        }
+        return key
+    }
+
+    /**
+     * Make the KeyCode pretty for printing on the menu
+     * @param {KeyCode} keyCode
+     * @return {string}
+     * @private
+     */
+    static prettifyKey(keyCode)
+    {
+        keyCode = Accelerators.prepareKey(keyCode)
+        let key = ''
+        if (keyCode.indexOf('+') !== -1)
+        {
+            const split = keyCode.toLowerCase().split('+')
+            for (let i = 0; i &lt; split.length - 1; i++)
+            {
+                let modifier = split[i]
+                key += modifier[0].toUpperCase() + modifier.substr(1) + '+'
+            }
+            key += split[split.length - 1].toUpperCase()
+        }
+        else
+        {
+            key = keyCode.toUpperCase()
+        }
+        return key
+    }
+
+    /**
+     * register a key as a global accelerator
+     * @param {KeyCodes} keyCode (e.g., Ctrl+shift+E)
+     * @param {function} callback
+     */
+    register(keyCode, callback)
+    {
+        this.keys[Accelerators.prepareKey(keyCode)] = callback
+    }
+
+    keyDown(accelerator, e)
+    {
+        const modifiers = []
+        if (e.altKey)
+        {
+            modifiers.push('alt')
+        }
+        if (e.ctrlKey)
+        {
+            modifiers.push('ctrl')
+        }
+        if (e.metaKey)
+        {
+            modifiers.push('meta')
+        }
+        if (e.shiftKey)
+        {
+            modifiers.push('shift')
+        }
+        let keyCode = ''
+        for (let modifier of modifiers)
+        {
+            keyCode = modifier + '+'
+        }
+        let translate = e.code.toLowerCase()
+        translate = translate.replace('digit', '')
+        translate = translate.replace('key', '')
+        keyCode += translate
+        if (this.menuKeys[keyCode])
+        {
+            this.menuKeys[keyCode](e, this)
+        }
+        else if (this.keys[keyCode])
+        {
+            this.keys[keyCode](e, this)
+        }
+    }
+}
+
+module.exports = Accelerators</code></pre>
+        </article>
+    </section>
+
+
+
+
+
+
+        
+
+        <footer class="content-size">
+            <div class="footer">
+                Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Fri Mar 09 2018 13:36:11 GMT+0800 (DST)
+            </div>
+        </footer>
+    </div>
+</div>
+<script>prettyPrint();</script>
+<script src="scripts/main.js"></script>
+</body>
+</html>

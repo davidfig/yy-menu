@@ -7,8 +7,9 @@ function test()
     const menu = new Menu()
 
     const file = new Menu()
+    file.append(new MenuItem({ label: '&New...', accelerator: 'Control+N' }))
     file.append(new MenuItem({ label: '&Save...', accelerator: 'CommandOrControl+S' }))
-    file.append(new MenuItem({ label: '&Open...', accelerator: 'CommandOrControl+O' }))
+    file.insert(1, new MenuItem({ label: '&Open...', accelerator: 'CommandOrControl+O' }))
     file.append(new MenuItem({ type: 'separator' }))
     file.append(new MenuItem({ label: '&Autosave', type: 'checkbox', checked: true }))
     file.append(new MenuItem({ type: 'separator' }))
@@ -34,11 +35,11 @@ function test()
     submenu2.append(new MenuItem({ label: 'fourth' }))
 
     const view = new Menu()
-    view.append(new MenuItem({ label: 'submenu 1', submenu}))
-    view.append(new MenuItem({ label: 'zoom in', accelerator: 'CommandOrControl+='}))
-    view.append(new MenuItem({ label: 'zoom out', accelerator: 'CommandOrControl+-'}))
+    view.append(new MenuItem({ label: 'submenu &1', submenu}))
+    view.append(new MenuItem({ label: 'zoom &in', accelerator: 'CommandOrControl+='}))
+    view.append(new MenuItem({ label: 'zoom &out', accelerator: 'CommandOrControl+-'}))
     view.append(new MenuItem({ type: 'separator' }))
-    view.append(new MenuItem({ label: 'submenu 2', submenu: submenu2 }))
+    view.append(new MenuItem({ label: 'submenu &2', submenu: submenu2 }))
     menu.append(new MenuItem({ label: '&View', submenu: view }))
 
     Menu.SetApplicationMenu(menu)
@@ -17193,7 +17194,7 @@ class Accelerators
         if (letter)
         {
             const keyCode = (menuItem.menu.applicationMenu ? 'alt+' : '') + letter
-            this.menuKeys[this.prepareKey(keyCode)] = (e) =>
+            this.menuKeys[Accelerators.prepareKey(keyCode)] = (e) =>
             {
                 menuItem.handleClick(e)
                 e.stopPropagation()
@@ -17233,7 +17234,7 @@ class Accelerators
      * For example: ctrl+shift+e
      * NOTE: Keycodes is case insensitive
      * Modifiers:
-     *    ctrl, alt, shift, meta,
+     *    ctrl, alt, shift, meta, (ctrl aliases: command, control, commandorcontrol)
      * Keys:
      *    escape, 0-9, minus, equal, backspace, tab, a-z, backetleft, bracketright, semicolon, quote,
      *    backquote, backslash, comma, period, slash, numpadmultiply, space, capslock, f1-f24, pause,
@@ -17250,7 +17251,7 @@ class Accelerators
      * @return {KeyCodes} formatted and sorted keyCode
      * @private
      */
-    prepareKey(keyCode)
+    static prepareKey(keyCode)
     {
         let modifiers = []
         let key = ''
@@ -17260,7 +17261,11 @@ class Accelerators
             const split = keyCode.toLowerCase().split('+')
             for (let i = 0; i < split.length - 1; i++)
             {
-                modifiers.push(split[i])
+                let modifier = split[i]
+                modifier = modifier.replace('commandorcontrol', 'ctrl')
+                modifier = modifier.replace('command', 'ctrl')
+                modifier = modifier.replace('control', 'ctrl')
+                modifiers.push(modifier)
             }
             modifiers = modifiers.sort((a, b) => { return a[0] > b[0] ? 1 : a[0] < b[0] ? -1 : 0 })
             for (let part of modifiers)
@@ -17277,13 +17282,39 @@ class Accelerators
     }
 
     /**
+     * Make the KeyCode pretty for printing on the menu
+     * @param {KeyCode} keyCode
+     * @return {string}
+     */
+    static prettifyKey(keyCode)
+    {
+        keyCode = Accelerators.prepareKey(keyCode)
+        let key = ''
+        if (keyCode.indexOf('+') !== -1)
+        {
+            const split = keyCode.toLowerCase().split('+')
+            for (let i = 0; i < split.length - 1; i++)
+            {
+                let modifier = split[i]
+                key += modifier[0].toUpperCase() + modifier.substr(1) + '+'
+            }
+            key += split[split.length - 1].toUpperCase()
+        }
+        else
+        {
+            key = keyCode.toUpperCase()
+        }
+        return key
+    }
+
+    /**
      * register a key as a global accelerator
      * @param {KeyCodes} keyCode (e.g., Ctrl+shift+E)
      * @param {function} callback
      */
     register(keyCode, callback)
     {
-        this.keys[this.prepareKey(keyCode)] = callback
+        this.keys[Accelerators.prepareKey(keyCode)] = callback
     }
 
     keyDown(accelerator, e)
@@ -17372,6 +17403,10 @@ class Menu
         this.applyStyles(Styles.MenuStyle)
     }
 
+    /**
+     * append a MenuItem to the Menu
+     * @param {MenuItem} menuItem
+     */
     append(menuItem)
     {
         if (menuItem.submenu)
@@ -17386,9 +17421,34 @@ class Menu
         }
     }
 
+    /**
+     * inserts a MenuItem into the Menu
+     * @param {number} pos
+     * @param {MenuItem} menuItem
+     */
+    insert(pos, menuItem)
+    {
+        if (pos >= this.div.childNodes.length)
+        {
+            this.append(menuItem)
+        }
+        else
+        {
+            if (menuItem.submenu)
+            {
+                menuItem.submenu.menu = this
+            }
+            menuItem.menu = this
+            this.div.insertBefore(menuItem.div, this.div.childNodes[pos])
+            if (menuItem.type !== 'separator')
+            {
+                this.children.splice(pos, 0, menuItem)
+            }
+        }
+    }
+
     hide()
     {
-        Menu.GlobalAccelarator.unregisterMenuShortcuts()
         let current = this.menu.showing
         while (current && current.submenu)
         {
@@ -17402,16 +17462,17 @@ class Menu
             }
             current = next
         }
-        this.menu.showing = null
-        this.div.remove()
-        this.menu.showAccelerators()
     }
 
     show(menuItem)
     {
+        Menu.GlobalAccelarator.unregisterMenuShortcuts()
         if (this.menu && this.menu.showing === menuItem)
         {
             this.hide()
+            this.menu.showing = null
+            this.div.remove()
+            this.menu.showAccelerators()
         }
         else
         {
@@ -17419,23 +17480,10 @@ class Menu
             {
                 if (this.menu.showing && this.menu.children.indexOf(menuItem) !== -1)
                 {
-                    let current = this.menu.showing
-                    current.div.style.backgroundColor = 'transparent'
-                    while (current && current.submenu)
-                    {
-                        current.submenu.div.remove()
-                        let next = current.submenu.showing
-                        if (next)
-                        {
-                            current.submenu.showing.div.style.backgroundColor = 'transparent'
-                            current.submenu.showing = false
-                        }
-                        current = next
-                    }
+                    this.hide()
                 }
                 this.menu.showing = menuItem
                 this.menu.hideAccelerators()
-                Menu.GlobalAccelarator.unregisterMenuShortcuts()
             }
             const div = menuItem.div
             const parent = this.menu.div
@@ -17611,6 +17659,62 @@ class Menu
     }
 
     /**
+     * move if selector exists
+     * @param {MouseEvent} e
+     * @param {string} direction
+     * @private
+     */
+    moveSelector(e, direction)
+    {
+        this.selector.div.style.backgroundColor = 'transparent'
+        let index = this.children.indexOf(this.selector)
+        if (direction === 'down' || direction === 'up')
+        {
+            if (direction === 'down')
+            {
+                index++
+                index = (index === this.children.length) ? 0 : index
+            }
+            else
+            {
+                index--
+                index = (index < 0) ? this.children.length - 1 : index
+            }
+            this.selector = this.children[index]
+        }
+        else
+        {
+            if (direction === 'right')
+            {
+                if (this.selector.submenu)
+                {
+                    this.selector.handleClick(e)
+                    this.selector = null
+                }
+                else
+                {
+                    this.moveChild(direction)
+                }
+            }
+            else if (direction === 'left')
+            {
+                if (!this.selector.menu.menu.applicationMenu)
+                {
+                    this.selector.menu.attached.handleClick(e)
+                    this.selector.menu.menu.selector = this.selector.menu.attached
+                    this.selector = null
+                }
+                else
+                {
+                    this.moveChild(direction)
+                }
+            }
+            e.preventDefault()
+            return true
+        }
+    }
+
+    /**
      * move the selector in the menu
      * @param {KeyboardEvent} e
      * @param {string} direction (left, right, up, down)
@@ -17620,56 +17724,9 @@ class Menu
     {
         if (this.selector)
         {
-            this.selector.div.style.backgroundColor = 'transparent'
-            let index = this.children.indexOf(this.selector)
-            if (direction === 'down' || direction === 'up')
+            if (this.moveSelector(e, direction))
             {
-                if (direction === 'down')
-                {
-                    index++
-                    index = (index === this.children.length) ? 0 : index
-                }
-                else
-                {
-                    index--
-                    index = (index < 0) ? this.children.length - 1 : index
-                }
-                this.selector = this.children[index]
-            }
-            else
-            {
-                if (direction === 'right')
-                {
-                    if (this.selector.submenu)
-                    {
-                        this.selector.handleClick(e)
-                        this.selector = null
-                        e.preventDefault()
-                        return
-                    }
-                    else
-                    {
-                        this.moveChild(direction)
-                        e.preventDefault()
-                        return
-                    }
-                }
-                else if (direction === 'left')
-                {
-                    if (!this.selector.menu.menu.applicationMenu)
-                    {
-                        this.selector.menu.hide()
-                        this.selector = null
-                        e.preventDefault()
-                        return
-                    }
-                    else
-                    {
-                        this.moveChild(direction)
-                        e.preventDefault()
-                        return
-                    }
-                }
+                return
             }
         }
         else
@@ -17685,14 +17742,29 @@ class Menu
         }
         this.selector.div.style.backgroundColor = Styles.SelectedBackground
         e.preventDefault()
+        e.stopPropagation()
     }
 
     /**
-     * enter the menuItem currently selected (via move)
+     * click the selector with keyboard
+     * @private
      */
-    enter()
+    enter(e)
     {
+        if (this.selector)
+        {
+            this.selector.handleClick(e)
+        }
+    }
 
+    /**
+     * array containing the menu's items
+     * @property {MenuItems[]} items
+     * @readonly
+     */
+    get items()
+    {
+        return this.children
     }
 
     static SetApplicationMenu(menu)
@@ -17736,16 +17808,17 @@ module.exports = Menu
 const clicked = require('clicked')
 const html = require('./html')
 const Styles = require('./styles')
+const Accelerators = require('./accelerators')
 
 class MenuItem
 {
     /**
      * @param {object} options
-     * @param {function} [options.click]
+     * @param {ClickCallback} [options.click]
      * @param {string} [options.label]
      * @param {string} [options.type]
      * @param {object} [options.styles] additional CSS styles to apply to this MenuItem
-     * @param {string} [options.accelerator] see https://electronjs.org/docs/api/accelerator
+     * @param {string} [options.accelerator] see Accelerator for inputs (e.g., ctrl+shift+A)
      * @param {MenuItem} [options.submenu] attach a submenu
      * @param {boolean} [options.checked]
      */
@@ -17779,6 +17852,12 @@ class MenuItem
             this.div.addEventListener('mouseleave', () => this.mouseleave())
         }
     }
+
+    /**
+     * The click callback
+     * @callback ClickCallback
+     * @param {InputEvent} e
+     */
 
     mouseenter()
     {
@@ -17850,7 +17929,7 @@ class MenuItem
                     if (letter === '&')
                     {
                         i++
-                        html({ parent: this.label, type: 'span', html: text[i], styles: { textDecoration: 'underline' } })
+                        html({ parent: this.label, type: 'span', html: text[i], styles: Styles.AcceleratorKey })
                         current = html({ parent: this.label, type: 'span' })
                     }
                     else
@@ -17881,7 +17960,7 @@ class MenuItem
 
     createAccelerator(accelerator)
     {
-        this.accelerator = html({ parent: this.div, html: accelerator ? accelerator :  '', styles: Styles.Accelerator})
+        this.accelerator = html({ parent: this.div, html: accelerator ? Accelerators.prettifyKey(accelerator) :  '', styles: Styles.Accelerator})
     }
 
     createSubmenu(submenu)
@@ -17920,6 +17999,7 @@ class MenuItem
                 this.submenuTimeout = null
             }
             this.submenu.show(this)
+            this.div.style.backgroundColor = Styles.SelectedBackground
         }
         else if (this.type === 'checkbox')
         {
@@ -17938,7 +18018,7 @@ class MenuItem
 }
 
 module.exports = MenuItem
-},{"./html":184,"./styles":187,"clicked":3}],187:[function(require,module,exports){
+},{"./accelerators":183,"./html":184,"./styles":187,"clicked":3}],187:[function(require,module,exports){
 const ApplicationContainer = {
     'z-index': 999999,
     'position': 'fixed',
@@ -17992,6 +18072,11 @@ const Separator = {
     'margin': '0.5em 0'
 }
 
+const AcceleratorKey = {
+    'text-decoration': 'underline',
+    'text-decoration-color': 'rgba(0,0,0,0.5)'
+}
+
 const MinimumColumnWidth = 20
 
 const SelectedBackground = 'rgba(0,0,0,0.1)'
@@ -18008,6 +18093,7 @@ module.exports = {
     ApplicationMenuRowStyle,
     RowStyle,
     Accelerator,
+    AcceleratorKey,
     Separator,
     MinimumColumnWidth,
     SelectedBackground,

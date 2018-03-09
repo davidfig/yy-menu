@@ -1,0 +1,55 @@
+{
+    "applicationName": "yy-menu",
+    "disqus": "",
+    "openGraph": {
+        "title": "",
+        "type": "website",
+        "image": "",
+        "site_name": "",
+        "url": ""
+    },
+    "meta": {
+        "title": "DomEase",
+        "description": "",
+        "keyword": ""
+    },
+    "linenums": true,
+    "source": {
+        "include": [
+            "./src"
+        ],
+        "includePattern": ".+\\.js(doc)?$",
+        "excludePattern": "(^|\\/|\\\\)_"
+    },
+    "opts": {
+        "readme": "./README.md",
+        "encoding": "utf8",
+        "recurse": true,
+        "private": false,
+        "lenient": true,
+        "destination": "./docs/jsdoc",
+        "template": "./node_modules/yy-jsdoc-template"
+    },
+    "plugins": [
+        "./node_modules/yy-jsdoc-template/plugins/skip-node_modules",
+        "plugins/markdown"
+    ],
+    "readmeShowNav": "Viewport",
+    "templates": {
+        "default": {
+            "outputSourceFiles": true
+        },
+        "applicationName": "yy-menu",
+        "footer"        : "by YOPEY YOPEY LLC (yopeyopey.com)",
+        "copyright"     : "Copyright © 2018 YOPEY YOPEY LLC.",
+        "meta": {
+            "title": "yy-menu API Documentation",
+            "description": "Documentation for yy-menu library",
+            "keyword": ["menu", "system", "UI", "accelerators", "Electron", "file menu", "web app"]
+        },
+        "matomo": {
+            "url": "https://analytics.yopeyopey.com/piwik/",
+            "id": 18
+        }
+    }
+}
