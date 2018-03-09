@@ -41,9 +41,9 @@ function test()
     view.append(new MenuItem({ label: 'submenu &2', submenu: submenu2 }))
     menu.append(new MenuItem({ label: '&View', submenu: view }))
 
-    Menu.SetApplicationMenu(menu)
+    Menu.setApplicationMenu(menu)
 
-    // Menu.GlobalAccelarator.register('a', () => console.log('hi'))
+    Menu.GlobalAccelarator.register('a', () => console.log('hi'))
 }
 
 window.onload = function ()

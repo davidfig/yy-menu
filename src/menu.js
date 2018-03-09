@@ -386,7 +386,7 @@ class Menu
         return this.children
     }
 
-    static SetApplicationMenu(menu)
+    static setApplicationMenu(menu)
     {
         menu.application = html({ parent: document.body, styles: Styles.ApplicationContainer })
         menu.applyStyles(Styles.ApplicationMenuStyle)

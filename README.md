@@ -23,7 +23,7 @@ submenu.append(new MenuItem({ label: 'Check&box', type: 'checkbox', checked: tru
 menu.append(new MenuItem({ label: 'Sub&menu', submenu: submenu }));
 
 // set menu as the application (i.e., top level) menu
-Menu.SetApplicationMenu(menu);
+Menu.setApplicationMenu(menu);
 
 // register a keyboard shortcut unrelated to menu
 Menu.GlobalAccelerator.register('ctrl-a', pressA);

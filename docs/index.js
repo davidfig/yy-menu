@@ -499,7 +499,7 @@ class Menu {
         return this.children;
     }
 
-    static SetApplicationMenu(menu) {
+    static setApplicationMenu(menu) {
         menu.application = html({ parent: document.body, styles: Styles.ApplicationContainer });
         menu.applyStyles(Styles.ApplicationMenuStyle);
         for (let child of menu.children) {
@@ -829,9 +829,9 @@ function test()
     view.append(new MenuItem({ label: 'submenu &2', submenu: submenu2 }))
     menu.append(new MenuItem({ label: '&View', submenu: view }))
 
-    Menu.SetApplicationMenu(menu)
+    Menu.setApplicationMenu(menu)
 
-    // Menu.GlobalAccelarator.register('a', () => console.log('hi'))
+    Menu.GlobalAccelarator.register('a', () => console.log('hi'))
 }
 
 window.onload = function ()
