@@ -1,7 +1,8 @@
 {
   "name": "yy-menu",
   "version": "1.0.0",
-  "description": "A menu system for web apps inspired by Electron",
+  "description": "A traditional menu system for web apps inspired by Electron",
+  "keywords": ["menu", "system", "UI", "accelerators", "Electron", "file menu", "web app"],
   "main": "index.js",
   "scripts": {
     "test": "./node_modules/.bin/budo --dir docs docs/code.js:index.js --live",
