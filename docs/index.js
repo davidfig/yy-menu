@@ -1,793 +1,5 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-class Accelerators {
-    /**
-     * Handles all keyboard input for the menu and user-registered keys registered through Menu.GlobalAccelerator
-     * @param {object} options
-     * @param {HTMLElement} [options.div] used for global accelerators (usually attached to document.body)
-     * @param {Menu} [options.menu] Menu to attach accelerators
-     */
-    constructor(options) {
-        this.menuKeys = {};
-        this.keys = {};
-        if (options.div) {
-            options.div.addEventListener('keydown', e => this.keyDown(this, e));
-        } else {
-            options.menu.div.addEventListener('keydown', e => this.keyDown(this, e));
-        }
-    }
-
-    /**
-     * Register a shortcut key for use by an open menu
-     * @param {KeyCodes} letter
-     * @param {MenuItem} menuItem
-     * @param {boolean} applicationMenu
-     * @private
-     */
-    registerMenuShortcut(letter, menuItem) {
-        if (letter) {
-            const keyCode = (menuItem.menu.applicationMenu ? 'alt+' : '') + letter;
-            this.menuKeys[Accelerators.prepareKey(keyCode)] = e => {
-                menuItem.handleClick(e);
-                e.stopPropagation();
-                e.preventDefault();
-            };
-        }
-    }
-
-    /**
-     * Register special shortcut keys for menu
-     * @param {MenuItem} menuItem
-     * @private
-     */
-    registerMenuSpecial(menu) {
-        this.menuKeys['escape'] = () => menu.getApplicationMenu().closeAll();
-        this.menuKeys['enter'] = e => menu.enter(e);
-        this.menuKeys['space'] = e => menu.enter(e);
-        this.menuKeys['arrowright'] = e => menu.move(e, 'right');
-        this.menuKeys['arrowleft'] = e => menu.move(e, 'left');
-        this.menuKeys['arrowup'] = e => menu.move(e, 'up');
-        this.menuKeys['arrowdown'] = e => menu.move(e, 'down');
-    }
-
-    /**
-     * Removes menu shortcuts
-     * @private
-     */
-    unregisterMenuShortcuts() {
-        this.menuKeys = {};
-    }
-
-    /**
-     * Keycodes definition. In the form of modifier[+modifier...]+key
-     * <p>For example: ctrl+shift+e</p>
-     * <p>KeyCodes are case insensitive (i.e., shift+a is the same as Shift+A)</p>
-     * <pre>
-     * Modifiers:
-     *    ctrl, alt, shift, meta, (ctrl aliases: command, control, commandorcontrol)
-     * </pre>
-     * <pre>
-     * Keys:
-     *    escape, 0-9, minus, equal, backspace, tab, a-z, backetleft, bracketright, semicolon, quote,
-     *    backquote, backslash, comma, period, slash, numpadmultiply, space, capslock, f1-f24, pause,
-     *    scrolllock, printscreen, home, arrowup, arrowleft, arrowright, arrowdown, pageup, pagedown,
-     *    end, insert, delete, enter, shiftleft, shiftright, ctrlleft, ctrlright, altleft, altright, shiftleft,
-     *    shiftright, numlock, numpad...
-     * </pre>
-     * For OS-specific codes and a more detailed explanation see {@link https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/code}. Also note that 'Digit' and 'Key' are removed from the code to make it easier to type.
-     *
-     * @typedef {string} Accelerators~KeyCodes
-     */
-
-    /**
-     * translate a user-provided keycode
-     * @param {KeyCodes} keyCode
-     * @return {KeyCodes} formatted and sorted keyCode
-     * @private
-     */
-    static prepareKey(keyCode) {
-        let modifiers = [];
-        let key = '';
-        keyCode = keyCode.toLowerCase();
-        if (keyCode.indexOf('+') !== -1) {
-            const split = keyCode.toLowerCase().split('+');
-            for (let i = 0; i < split.length - 1; i++) {
-                let modifier = split[i];
-                modifier = modifier.replace('commandorcontrol', 'ctrl');
-                modifier = modifier.replace('command', 'ctrl');
-                modifier = modifier.replace('control', 'ctrl');
-                modifiers.push(modifier);
-            }
-            modifiers = modifiers.sort((a, b) => {
-                return a[0] > b[0] ? 1 : a[0] < b[0] ? -1 : 0;
-            });
-            for (let part of modifiers) {
-                key += part + '+';
-            }
-            key += split[split.length - 1];
-        } else {
-            key = keyCode;
-        }
-        return key;
-    }
-
-    /**
-     * Make the KeyCode pretty for printing on the menu
-     * @param {KeyCode} keyCode
-     * @return {string}
-     * @private
-     */
-    static prettifyKey(keyCode) {
-        keyCode = Accelerators.prepareKey(keyCode);
-        let key = '';
-        if (keyCode.indexOf('+') !== -1) {
-            const split = keyCode.toLowerCase().split('+');
-            for (let i = 0; i < split.length - 1; i++) {
-                let modifier = split[i];
-                key += modifier[0].toUpperCase() + modifier.substr(1) + '+';
-            }
-            key += split[split.length - 1].toUpperCase();
-        } else {
-            key = keyCode.toUpperCase();
-        }
-        return key;
-    }
-
-    /**
-     * register a key as a global accelerator
-     * @param {KeyCodes} keyCode (e.g., Ctrl+shift+E)
-     * @param {function} callback
-     */
-    register(keyCode, callback) {
-        this.keys[Accelerators.prepareKey(keyCode)] = callback;
-    }
-
-    keyDown(accelerator, e) {
-        const modifiers = [];
-        if (e.altKey) {
-            modifiers.push('alt');
-        }
-        if (e.ctrlKey) {
-            modifiers.push('ctrl');
-        }
-        if (e.metaKey) {
-            modifiers.push('meta');
-        }
-        if (e.shiftKey) {
-            modifiers.push('shift');
-        }
-        let keyCode = '';
-        for (let modifier of modifiers) {
-            keyCode = modifier + '+';
-        }
-        let translate = e.code.toLowerCase();
-        translate = translate.replace('digit', '');
-        translate = translate.replace('key', '');
-        keyCode += translate;
-        if (this.menuKeys[keyCode]) {
-            this.menuKeys[keyCode](e, this);
-        } else if (this.keys[keyCode]) {
-            this.keys[keyCode](e, this);
-        }
-    }
-}
-
-module.exports = Accelerators;
-
-},{}],2:[function(require,module,exports){
-module.exports = function (options) {
-    options = options || {};
-    const object = document.createElement(options.type || 'div');
-    if (options.parent) {
-        options.parent.appendChild(object);
-    }
-    if (options.styles) {
-        for (let style in options.styles) {
-            object.style[style] = options.styles[style];
-        }
-    }
-    if (options.html) {
-        object.innerHTML = options.html;
-    }
-    return object;
-};
-
-},{}],3:[function(require,module,exports){
-const Styles = require('./styles');
-const MenuItem = require('./menuItem');
-const Accelerators = require('./accelerators');
-const html = require('./html');
-
-let _accelerator;
-
-class Menu {
-    /**
-     * creates a menu bar
-     * @param {object} [options]
-     * @param {object} [options.styles] additional CSS styles for menu
-     */
-    constructor(options) {
-        options = options || {};
-        this.div = document.createElement('div');
-        this.styles = options.styles;
-        this.children = [];
-        this.applyStyles(Styles.MenuStyle);
-    }
-
-    /**
-     * append a MenuItem to the Menu
-     * @param {MenuItem} menuItem
-     */
-    append(menuItem) {
-        if (menuItem.submenu) {
-            menuItem.submenu.menu = this;
-        }
-        menuItem.menu = this;
-        this.div.appendChild(menuItem.div);
-        if (menuItem.type !== 'separator') {
-            this.children.push(menuItem);
-        }
-    }
-
-    /**
-     * inserts a MenuItem into the Menu
-     * @param {number} pos
-     * @param {MenuItem} menuItem
-     */
-    insert(pos, menuItem) {
-        if (pos >= this.div.childNodes.length) {
-            this.append(menuItem);
-        } else {
-            if (menuItem.submenu) {
-                menuItem.submenu.menu = this;
-            }
-            menuItem.menu = this;
-            this.div.insertBefore(menuItem.div, this.div.childNodes[pos]);
-            if (menuItem.type !== 'separator') {
-                this.children.splice(pos, 0, menuItem);
-            }
-        }
-    }
-
-    hide() {
-        let current = this.menu.showing;
-        while (current && current.submenu) {
-            current.div.style.backgroundColor = 'transparent';
-            current.submenu.div.remove();
-            let next = current.submenu.showing;
-            if (next) {
-                current.submenu.showing.div.style.backgroundColor = 'transparent';
-                current.submenu.showing = null;
-            }
-            current = next;
-        }
-    }
-
-    show(menuItem) {
-        Menu.GlobalAccelarator.unregisterMenuShortcuts();
-        if (this.menu && this.menu.showing === menuItem) {
-            this.hide();
-            this.menu.showing = null;
-            this.div.remove();
-            this.menu.showAccelerators();
-        } else {
-            if (this.menu) {
-                if (this.menu.showing && this.menu.children.indexOf(menuItem) !== -1) {
-                    this.hide();
-                }
-                this.menu.showing = menuItem;
-                this.menu.hideAccelerators();
-            }
-            const div = menuItem.div;
-            const parent = this.menu.div;
-            if (this.menu.applicationMenu) {
-                this.div.style.left = div.offsetLeft + 'px';
-                this.div.style.top = div.offsetTop + div.offsetHeight + 'px';
-            } else {
-                this.div.style.left = parent.offsetLeft + parent.offsetWidth - Styles.Overlap + 'px';
-                this.div.style.top = parent.offsetTop + div.offsetTop - Styles.Overlap + 'px';
-            }
-            this.attached = menuItem;
-            this.showAccelerators();
-            this.getApplicationDiv().appendChild(this.div);
-            let label = 0,
-                accelerator = 0,
-                arrow = 0,
-                checked = 0;
-            for (let child of this.children) {
-                child.check.style.width = 'auto';
-                child.label.style.width = 'auto';
-                child.accelerator.style.width = 'auto';
-                child.arrow.style.width = 'auto';
-                if (child.type === 'checkbox') {
-                    checked = Styles.MinimumColumnWidth;
-                }
-                if (child.submenu) {
-                    arrow = Styles.MinimumColumnWidth;
-                }
-            }
-            for (let child of this.children) {
-                const childLabel = child.label.offsetWidth * 2;
-                label = childLabel > label ? childLabel : label;
-                const childAccelerator = child.accelerator.offsetWidth;
-                accelerator = childAccelerator > accelerator ? childAccelerator : accelerator;
-                if (child.submenu) {
-                    arrow = child.arrow.offsetWidth;
-                }
-            }
-            for (let child of this.children) {
-                child.check.style.width = checked + 'px';
-                child.label.style.width = label + 'px';
-                child.accelerator.style.width = accelerator + 'px';
-                child.arrow.style.width = arrow + 'px';
-            }
-            if (this.div.offsetLeft + this.div.offsetWidth > window.innerWidth) {
-                this.div.style.left = window.innerWidth - this.div.offsetWidth + 'px';
-            }
-            if (this.div.offsetTop + this.div.offsetHeight > window.innerHeight) {
-                this.div.style.top = window.innerHeight - this.div.offsetHeight + 'px';
-            }
-        }
-    }
-
-    applyStyles(base) {
-        const styles = {};
-        for (let style in base) {
-            styles[style] = base[style];
-        }
-        if (this.styles) {
-            for (let style in this.styles) {
-                styles[style] = this.styles[style];
-            }
-        }
-        for (let style in styles) {
-            this.div.style[style] = styles[style];
-        }
-    }
-
-    showAccelerators() {
-        for (let child of this.children) {
-            child.showShortcut();
-            if (child.type !== 'separator') {
-                const index = child.text.indexOf('&');
-                if (index !== -1) {
-                    Menu.GlobalAccelarator.registerMenuShortcut(child.text[index + 1], child);
-                }
-            }
-        }
-        if (!this.applicationMenu) {
-            Menu.GlobalAccelarator.registerMenuSpecial(this);
-        }
-    }
-
-    hideAccelerators() {
-        for (let child of this.children) {
-            child.hideShortcut();
-        }
-    }
-
-    closeAll() {
-        if (this.showing) {
-            let menu = this;
-            while (menu.showing) {
-                menu = menu.showing.submenu;
-            }
-            while (menu && !menu.applicationMenu) {
-                if (menu.showing) {
-                    menu.showing.div.style.backgroundColor = 'transparent';
-                    menu.showing = null;
-                }
-                menu.div.remove();
-                menu = menu.menu;
-            }
-            if (menu) {
-                menu.showing.div.style.background = 'transparent';
-                menu.showing = null;
-                menu.showAccelerators();
-            }
-        }
-    }
-
-    getApplicationMenu() {
-        let menu = this.menu;
-        while (menu && !menu.applicationMenu) {
-            menu = menu.menu;
-        }
-        return menu;
-    }
-
-    getApplicationDiv() {
-        return this.getApplicationMenu().application;
-    }
-
-    /**
-     * move to the next child pane
-     * @param {string} direction (left or right)
-     * @private
-     */
-    moveChild(direction) {
-        const parent = this.selector.menu.menu;
-        let index = parent.children.indexOf(parent.showing);
-        if (direction === 'left') {
-            index--;
-            index = index < 0 ? parent.children.length - 1 : index;
-        } else {
-            index++;
-            index = index === parent.children.length ? 0 : index;
-        }
-        parent.children[index].handleClick({});
-        this.selector = null;
-    }
-
-    /**
-     * move if selector exists
-     * @param {MouseEvent} e
-     * @param {string} direction
-     * @private
-     */
-    moveSelector(e, direction) {
-        this.selector.div.style.backgroundColor = 'transparent';
-        let index = this.children.indexOf(this.selector);
-        if (direction === 'down' || direction === 'up') {
-            if (direction === 'down') {
-                index++;
-                index = index === this.children.length ? 0 : index;
-            } else {
-                index--;
-                index = index < 0 ? this.children.length - 1 : index;
-            }
-            this.selector = this.children[index];
-        } else {
-            if (direction === 'right') {
-                if (this.selector.submenu) {
-                    this.selector.handleClick(e);
-                    this.selector = null;
-                } else {
-                    this.moveChild(direction);
-                }
-            } else if (direction === 'left') {
-                if (!this.selector.menu.menu.applicationMenu) {
-                    this.selector.menu.attached.handleClick(e);
-                    this.selector.menu.menu.selector = this.selector.menu.attached;
-                    this.selector = null;
-                } else {
-                    this.moveChild(direction);
-                }
-            }
-            e.preventDefault();
-            return true;
-        }
-    }
-
-    /**
-     * move the selector in the menu
-     * @param {KeyboardEvent} e
-     * @param {string} direction (left, right, up, down)
-     * @private
-     */
-    move(e, direction) {
-        if (this.selector) {
-            if (this.moveSelector(e, direction)) {
-                return;
-            }
-        } else {
-            if (direction === 'up') {
-                this.selector = this.children[this.children.length - 1];
-            } else {
-                this.selector = this.children[0];
-            }
-        }
-        this.selector.div.style.backgroundColor = Styles.SelectedBackground;
-        e.preventDefault();
-        e.stopPropagation();
-    }
-
-    /**
-     * click the selector with keyboard
-     * @private
-     */
-    enter(e) {
-        if (this.selector) {
-            this.selector.handleClick(e);
-        }
-    }
-
-    /**
-     * array containing the menu's items
-     * @property {MenuItems[]} items
-     * @readonly
-     */
-    get items() {
-        return this.children;
-    }
-
-    static setApplicationMenu(menu) {
-        menu.application = html({ parent: document.body, styles: Styles.ApplicationContainer });
-        menu.applyStyles(Styles.ApplicationMenuStyle);
-        for (let child of menu.children) {
-            child.applyStyles(Styles.ApplicationMenuRowStyle);
-            if (child.arrow) {
-                child.arrow.style.display = 'none';
-            }
-            menu.div.appendChild(child.div);
-        }
-        menu.div.tabIndex = -1;
-        menu.application.appendChild(menu.div);
-        menu.applicationMenu = true;
-        menu.div.addEventListener('blur', () => menu.closeAll());
-        menu.showAccelerators();
-    }
-
-    /**
-     * GlobalAccelerator used by menu and provides a way to register keyboard accelerators throughout the application
-     * @typedef {Accelerator}
-     */
-    static get GlobalAccelarator() {
-        if (!_accelerator) {
-            _accelerator = new Accelerators({ div: document.body });
-        }
-        return _accelerator;
-    }
-}
-
-Menu.MenuItem = MenuItem;
-
-module.exports = Menu;
-
-},{"./accelerators":1,"./html":2,"./menuItem":4,"./styles":5}],4:[function(require,module,exports){
-const clicked = require('clicked');
-const html = require('./html');
-const Styles = require('./styles');
-const Accelerators = require('./accelerators');
-
-class MenuItem {
-    /**
-     * @param {object} options
-     * @param {ClickCallback} [options.click] callback when MenuItem is clicked
-     * @param {string} [options.label] label for menu entry (may include accelerator by placing & before letter)
-     * @param {string} [options.type] separator, checkbox, or undefined
-     * @param {object} [options.styles] additional CSS styles to apply to this MenuItem
-     * @param {string} [options.accelerator] see Accelerator for inputs (e.g., ctrl+shift+A)
-     * @param {MenuItem} [options.submenu] attaches a submenu (and changes type to submenu)
-     * @param {boolean} [options.checked] check the checkbox
-     */
-    constructor(options) {
-        options = options || {};
-        this.styles = options.styles;
-        this.div = html();
-        this.type = options.type;
-        this.click = options.click;
-        if (this.type === 'separator') {
-            this.applyStyles(Styles.Separator);
-        } else {
-            this.checked = options.checked;
-            this.createChecked(options.checked);
-            this.text = options.label || '&nbsp;&nbsp;&nbsp;';
-            this.label = html({ parent: this.div });
-            this.createAccelerator(options.accelerator);
-            this.createSubmenu(options.submenu);
-            if (options.submenu) {
-                this.submenu = options.submenu;
-                this.submenu.applyStyles(Styles.MenuStyle);
-            }
-            this.applyStyles(Styles.RowStyle);
-            clicked(this.div, e => this.handleClick(e));
-            this.div.addEventListener('mouseenter', () => this.mouseenter());
-            this.div.addEventListener('mouseleave', () => this.mouseleave());
-        }
-    }
-
-    /**
-     * The click callback
-     * @callback MenuItem~ClickCallback
-     * @param {InputEvent} e
-     */
-
-    mouseenter() {
-        if (!this.submenu || this.menu.showing !== this) {
-            this.div.style.backgroundColor = Styles.SelectedBackground;
-            if (this.submenu && !this.menu.applicationMenu) {
-                this.submenuTimeout = setTimeout(() => {
-                    this.submenuTimeout = null;
-                    this.submenu.show(this);
-                }, Styles.SubmenuOpenDelay);
-            }
-        }
-    }
-
-    mouseleave() {
-        if (!this.submenu || this.menu.showing !== this) {
-            if (this.submenuTimeout) {
-                clearTimeout(this.submenuTimeout);
-                this.submenuTimeout = null;
-            }
-            this.div.style.backgroundColor = 'transparent';
-        }
-    }
-
-    applyStyles(base) {
-        const styles = {};
-        for (let style in base) {
-            styles[style] = base[style];
-        }
-        if (this.styles) {
-            for (let style in this.styles) {
-                styles[style] = this.styles[style];
-            }
-        }
-        for (let style in styles) {
-            this.div.style[style] = styles[style];
-        }
-    }
-
-    createChecked(checked) {
-        this.check = html({ parent: this.div, html: checked ? '&#10004;' : '' });
-    }
-
-    showShortcut() {
-        if (this.type !== 'separator') {
-            this.label.innerHTML = '';
-            const text = this.text;
-            let current = html({ parent: this.label, type: 'span' });
-            if (text.indexOf('&') !== -1) {
-                let i = 0;
-                do {
-                    const letter = text[i];
-                    if (letter === '&') {
-                        i++;
-                        html({ parent: this.label, type: 'span', html: text[i], styles: Styles.AcceleratorKey });
-                        current = html({ parent: this.label, type: 'span' });
-                    } else {
-                        current.innerHTML += letter;
-                    }
-                    i++;
-                } while (i < text.length);
-            } else {
-                this.label.innerHTML = text;
-            }
-            this.shortcutAvailable = true;
-        }
-    }
-
-    hideShortcut() {
-        if (this.type !== 'separator') {
-            const text = this.text.replace('&', '');
-            this.label.innerHTML = text;
-            this.shortcutAvailable = true;
-        }
-    }
-
-    createAccelerator(accelerator) {
-        this.accelerator = html({ parent: this.div, html: accelerator ? Accelerators.prettifyKey(accelerator) : '', styles: Styles.Accelerator });
-    }
-
-    createSubmenu(submenu) {
-        this.arrow = html({ parent: this.div, html: submenu ? '&#9658;' : '' });
-    }
-
-    closeAll() {
-        let menu = this.menu;
-        while (menu && !menu.applicationMenu) {
-            if (menu.showing) {
-                menu.showing.div.style.backgroundColor = 'transparent';
-                menu.showing = null;
-            }
-            menu.div.remove();
-            menu = menu.menu;
-        }
-        if (menu) {
-            menu.showing.div.style.background = 'transparent';
-            menu.showing = null;
-            menu.showAccelerators();
-        }
-    }
-
-    handleClick(e) {
-        if (this.submenu) {
-            if (this.submenuTimeout) {
-                clearTimeout(this.submenuTimeout);
-                this.submenuTimeout = null;
-            }
-            this.submenu.show(this);
-            this.div.style.backgroundColor = Styles.SelectedBackground;
-        } else if (this.type === 'checkbox') {
-            this.checked = !this.checked;
-            this.check.innerHTML = this.checked ? '&#10004;' : '';
-        } else {
-            this.closeAll();
-        }
-        if (this.click) {
-            this.click(e, this);
-        }
-    }
-}
-
-module.exports = MenuItem;
-
-},{"./accelerators":1,"./html":2,"./styles":5,"clicked":8}],5:[function(require,module,exports){
-const ApplicationContainer = {
-    'z-index': 999999,
-    'position': 'fixed',
-    'top': 0,
-    'left': 0,
-    'user-select': 'none',
-    'background': 'red',
-    'font-size': '0.85em'
-};
-
-const ApplicationMenuStyle = {
-    'display': 'flex',
-    'flex-direction': 'row',
-    'color': 'black',
-    'backgroundColor': 'rgb(230,230,230)',
-    'width': '100vw',
-    'border': 'none',
-    'box-shadow': 'unset',
-    'outline': 'none'
-};
-
-const MenuStyle = {
-    'flex-direction': 'column',
-    'position': 'fixed',
-    'user-select': 'none',
-    'color': 'black',
-    'z-index': 999999,
-    'backgroundColor': 'white',
-    'border': '1px solid rgba(0,0,0,0.5)',
-    'boxShadow': '1px 3px 3px rgba(0,0,0,0.25)'
-};
-
-const ApplicationMenuRowStyle = {
-    'padding': '0.25em 0.5em',
-    'margin': 0,
-    'line-height': '1em'
-};
-
-const RowStyle = {
-    'display': 'flex',
-    'padding': '0.25em 1.5em 0.25em',
-    'line-height': '1.5em'
-};
-
-const Accelerator = {
-    'opacity': 0.5
-};
-
-const Separator = {
-    'border-bottom': '1px solid rgba(0,0,0,0.1)',
-    'margin': '0.5em 0'
-};
-
-const AcceleratorKey = {
-    'text-decoration': 'underline',
-    'text-decoration-color': 'rgba(0,0,0,0.5)'
-};
-
-const MinimumColumnWidth = 20;
-
-const SelectedBackground = 'rgba(0,0,0,0.1)';
-
-const Overlap = 5;
-
-// time to wait for submenu to open when hovering
-const SubmenuOpenDelay = 500;
-
-module.exports = {
-    ApplicationContainer,
-    ApplicationMenuStyle,
-    MenuStyle,
-    ApplicationMenuRowStyle,
-    RowStyle,
-    Accelerator,
-    AcceleratorKey,
-    Separator,
-    MinimumColumnWidth,
-    SelectedBackground,
-    Overlap,
-    SubmenuOpenDelay
-};
-
-},{}],6:[function(require,module,exports){
-const Menu = require('../dist/menu')
+const Menu = require('../src/menu')
 const MenuItem = Menu.MenuItem
 
 function test()
@@ -841,7 +53,7 @@ window.onload = function ()
     require('fork-me-github')('https://github.com/davidfig/menu')
     require('./highlight')()
 }
-},{"../dist/menu":3,"./highlight":7,"fork-me-github":9}],7:[function(require,module,exports){
+},{"../src/menu":185,"./highlight":2,"fork-me-github":4}],2:[function(require,module,exports){
 // shows the code in the demo
 module.exports = function highlight()
 {
@@ -858,7 +70,7 @@ module.exports = function highlight()
 
 // for eslint
 /* globals window, XMLHttpRequest, document */
-},{"highlight.js":11}],8:[function(require,module,exports){
+},{"highlight.js":6}],3:[function(require,module,exports){
 /**
  * Javascript: create click event for both mouse and touch
  * @example
@@ -961,7 +173,7 @@ function clicked(element, callback, options)
 }
 
 module.exports = clicked;
-},{}],9:[function(require,module,exports){
+},{}],4:[function(require,module,exports){
 // Programatically add fork me on github ribbon from javascript without making changes to CSS, HTML, or adding image files
 // by David Figatner
 // copyright 2017 YOPEY YOPEY LLC
@@ -1115,7 +327,7 @@ module.exports = function forkMe(url, options)
     sheet.insertRule('.' + a.className + '::before' + before + '}')
     sheet.insertRule('.' + a.className + '::after' + after + '}')
 }
-},{}],10:[function(require,module,exports){
+},{}],5:[function(require,module,exports){
 /*
 Syntax highlighting with language autodetection.
 https://highlightjs.org/
@@ -1933,7 +1145,7 @@ https://highlightjs.org/
   return hljs;
 }));
 
-},{}],11:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
 var hljs = require('./highlight');
 
 hljs.registerLanguage('1c', require('./languages/1c'));
@@ -2114,7 +1326,7 @@ hljs.registerLanguage('xquery', require('./languages/xquery'));
 hljs.registerLanguage('zephir', require('./languages/zephir'));
 
 module.exports = hljs;
-},{"./highlight":10,"./languages/1c":12,"./languages/abnf":13,"./languages/accesslog":14,"./languages/actionscript":15,"./languages/ada":16,"./languages/apache":17,"./languages/applescript":18,"./languages/arduino":19,"./languages/armasm":20,"./languages/asciidoc":21,"./languages/aspectj":22,"./languages/autohotkey":23,"./languages/autoit":24,"./languages/avrasm":25,"./languages/awk":26,"./languages/axapta":27,"./languages/bash":28,"./languages/basic":29,"./languages/bnf":30,"./languages/brainfuck":31,"./languages/cal":32,"./languages/capnproto":33,"./languages/ceylon":34,"./languages/clean":35,"./languages/clojure":37,"./languages/clojure-repl":36,"./languages/cmake":38,"./languages/coffeescript":39,"./languages/coq":40,"./languages/cos":41,"./languages/cpp":42,"./languages/crmsh":43,"./languages/crystal":44,"./languages/cs":45,"./languages/csp":46,"./languages/css":47,"./languages/d":48,"./languages/dart":49,"./languages/delphi":50,"./languages/diff":51,"./languages/django":52,"./languages/dns":53,"./languages/dockerfile":54,"./languages/dos":55,"./languages/dsconfig":56,"./languages/dts":57,"./languages/dust":58,"./languages/ebnf":59,"./languages/elixir":60,"./languages/elm":61,"./languages/erb":62,"./languages/erlang":64,"./languages/erlang-repl":63,"./languages/excel":65,"./languages/fix":66,"./languages/flix":67,"./languages/fortran":68,"./languages/fsharp":69,"./languages/gams":70,"./languages/gauss":71,"./languages/gcode":72,"./languages/gherkin":73,"./languages/glsl":74,"./languages/go":75,"./languages/golo":76,"./languages/gradle":77,"./languages/groovy":78,"./languages/haml":79,"./languages/handlebars":80,"./languages/haskell":81,"./languages/haxe":82,"./languages/hsp":83,"./languages/htmlbars":84,"./languages/http":85,"./languages/hy":86,"./languages/inform7":87,"./languages/ini":88,"./languages/irpf90":89,"./languages/java":90,"./languages/javascript":91,"./languages/jboss-cli":92,"./languages/json":93,"./languages/julia":95,"./languages/julia-repl":94,"./languages/kotlin":96,"./languages/lasso":97,"./languages/ldif":98,"./languages/leaf":99,"./languages/less":100,"./languages/lisp":101,"./languages/livecodeserver":102,"./languages/livescript":103,"./languages/llvm":104,"./languages/lsl":105,"./languages/lua":106,"./languages/makefile":107,"./languages/markdown":108,"./languages/mathematica":109,"./languages/matlab":110,"./languages/maxima":111,"./languages/mel":112,"./languages/mercury":113,"./languages/mipsasm":114,"./languages/mizar":115,"./languages/mojolicious":116,"./languages/monkey":117,"./languages/moonscript":118,"./languages/n1ql":119,"./languages/nginx":120,"./languages/nimrod":121,"./languages/nix":122,"./languages/nsis":123,"./languages/objectivec":124,"./languages/ocaml":125,"./languages/openscad":126,"./languages/oxygene":127,"./languages/parser3":128,"./languages/perl":129,"./languages/pf":130,"./languages/php":131,"./languages/pony":132,"./languages/powershell":133,"./languages/processing":134,"./languages/profile":135,"./languages/prolog":136,"./languages/protobuf":137,"./languages/puppet":138,"./languages/purebasic":139,"./languages/python":140,"./languages/q":141,"./languages/qml":142,"./languages/r":143,"./languages/rib":144,"./languages/roboconf":145,"./languages/routeros":146,"./languages/rsl":147,"./languages/ruby":148,"./languages/ruleslanguage":149,"./languages/rust":150,"./languages/scala":151,"./languages/scheme":152,"./languages/scilab":153,"./languages/scss":154,"./languages/shell":155,"./languages/smali":156,"./languages/smalltalk":157,"./languages/sml":158,"./languages/sqf":159,"./languages/sql":160,"./languages/stan":161,"./languages/stata":162,"./languages/step21":163,"./languages/stylus":164,"./languages/subunit":165,"./languages/swift":166,"./languages/taggerscript":167,"./languages/tap":168,"./languages/tcl":169,"./languages/tex":170,"./languages/thrift":171,"./languages/tp":172,"./languages/twig":173,"./languages/typescript":174,"./languages/vala":175,"./languages/vbnet":176,"./languages/vbscript":178,"./languages/vbscript-html":177,"./languages/verilog":179,"./languages/vhdl":180,"./languages/vim":181,"./languages/x86asm":182,"./languages/xl":183,"./languages/xml":184,"./languages/xquery":185,"./languages/yaml":186,"./languages/zephir":187}],12:[function(require,module,exports){
+},{"./highlight":5,"./languages/1c":7,"./languages/abnf":8,"./languages/accesslog":9,"./languages/actionscript":10,"./languages/ada":11,"./languages/apache":12,"./languages/applescript":13,"./languages/arduino":14,"./languages/armasm":15,"./languages/asciidoc":16,"./languages/aspectj":17,"./languages/autohotkey":18,"./languages/autoit":19,"./languages/avrasm":20,"./languages/awk":21,"./languages/axapta":22,"./languages/bash":23,"./languages/basic":24,"./languages/bnf":25,"./languages/brainfuck":26,"./languages/cal":27,"./languages/capnproto":28,"./languages/ceylon":29,"./languages/clean":30,"./languages/clojure":32,"./languages/clojure-repl":31,"./languages/cmake":33,"./languages/coffeescript":34,"./languages/coq":35,"./languages/cos":36,"./languages/cpp":37,"./languages/crmsh":38,"./languages/crystal":39,"./languages/cs":40,"./languages/csp":41,"./languages/css":42,"./languages/d":43,"./languages/dart":44,"./languages/delphi":45,"./languages/diff":46,"./languages/django":47,"./languages/dns":48,"./languages/dockerfile":49,"./languages/dos":50,"./languages/dsconfig":51,"./languages/dts":52,"./languages/dust":53,"./languages/ebnf":54,"./languages/elixir":55,"./languages/elm":56,"./languages/erb":57,"./languages/erlang":59,"./languages/erlang-repl":58,"./languages/excel":60,"./languages/fix":61,"./languages/flix":62,"./languages/fortran":63,"./languages/fsharp":64,"./languages/gams":65,"./languages/gauss":66,"./languages/gcode":67,"./languages/gherkin":68,"./languages/glsl":69,"./languages/go":70,"./languages/golo":71,"./languages/gradle":72,"./languages/groovy":73,"./languages/haml":74,"./languages/handlebars":75,"./languages/haskell":76,"./languages/haxe":77,"./languages/hsp":78,"./languages/htmlbars":79,"./languages/http":80,"./languages/hy":81,"./languages/inform7":82,"./languages/ini":83,"./languages/irpf90":84,"./languages/java":85,"./languages/javascript":86,"./languages/jboss-cli":87,"./languages/json":88,"./languages/julia":90,"./languages/julia-repl":89,"./languages/kotlin":91,"./languages/lasso":92,"./languages/ldif":93,"./languages/leaf":94,"./languages/less":95,"./languages/lisp":96,"./languages/livecodeserver":97,"./languages/livescript":98,"./languages/llvm":99,"./languages/lsl":100,"./languages/lua":101,"./languages/makefile":102,"./languages/markdown":103,"./languages/mathematica":104,"./languages/matlab":105,"./languages/maxima":106,"./languages/mel":107,"./languages/mercury":108,"./languages/mipsasm":109,"./languages/mizar":110,"./languages/mojolicious":111,"./languages/monkey":112,"./languages/moonscript":113,"./languages/n1ql":114,"./languages/nginx":115,"./languages/nimrod":116,"./languages/nix":117,"./languages/nsis":118,"./languages/objectivec":119,"./languages/ocaml":120,"./languages/openscad":121,"./languages/oxygene":122,"./languages/parser3":123,"./languages/perl":124,"./languages/pf":125,"./languages/php":126,"./languages/pony":127,"./languages/powershell":128,"./languages/processing":129,"./languages/profile":130,"./languages/prolog":131,"./languages/protobuf":132,"./languages/puppet":133,"./languages/purebasic":134,"./languages/python":135,"./languages/q":136,"./languages/qml":137,"./languages/r":138,"./languages/rib":139,"./languages/roboconf":140,"./languages/routeros":141,"./languages/rsl":142,"./languages/ruby":143,"./languages/ruleslanguage":144,"./languages/rust":145,"./languages/scala":146,"./languages/scheme":147,"./languages/scilab":148,"./languages/scss":149,"./languages/shell":150,"./languages/smali":151,"./languages/smalltalk":152,"./languages/sml":153,"./languages/sqf":154,"./languages/sql":155,"./languages/stan":156,"./languages/stata":157,"./languages/step21":158,"./languages/stylus":159,"./languages/subunit":160,"./languages/swift":161,"./languages/taggerscript":162,"./languages/tap":163,"./languages/tcl":164,"./languages/tex":165,"./languages/thrift":166,"./languages/tp":167,"./languages/twig":168,"./languages/typescript":169,"./languages/vala":170,"./languages/vbnet":171,"./languages/vbscript":173,"./languages/vbscript-html":172,"./languages/verilog":174,"./languages/vhdl":175,"./languages/vim":176,"./languages/x86asm":177,"./languages/xl":178,"./languages/xml":179,"./languages/xquery":180,"./languages/yaml":181,"./languages/zephir":182}],7:[function(require,module,exports){
 module.exports = function(hljs){
 
   // общий паттерн для определения идентификаторов
@@ -2624,7 +1836,7 @@ module.exports = function(hljs){
     ]  
   }
 };
-},{}],13:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 module.exports = function(hljs) {
     var regexes = {
         ruleDeclaration: "^[a-zA-Z][a-zA-Z0-9-]*",
@@ -2695,7 +1907,7 @@ module.exports = function(hljs) {
       ]
     };
 };
-},{}],14:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 module.exports = function(hljs) {
   return {
     contains: [
@@ -2733,7 +1945,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],15:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 module.exports = function(hljs) {
   var IDENT_RE = '[a-zA-Z_$][a-zA-Z0-9_$]*';
   var IDENT_FUNC_RETURN_TYPE_RE = '([*]|[a-zA-Z_$][a-zA-Z0-9_$]*)';
@@ -2807,7 +2019,7 @@ module.exports = function(hljs) {
     illegal: /#/
   };
 };
-},{}],16:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 module.exports = // We try to support full Ada2012
 //
 // We highlight all appearances of types, keywords, literals (string, char, number, bool)
@@ -2980,7 +2192,7 @@ function(hljs) {
         ]
     };
 };
-},{}],17:[function(require,module,exports){
+},{}],12:[function(require,module,exports){
 module.exports = function(hljs) {
   var NUMBER = {className: 'number', begin: '[\\$%]\\d+'};
   return {
@@ -3026,7 +2238,7 @@ module.exports = function(hljs) {
     illegal: /\S/
   };
 };
-},{}],18:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 module.exports = function(hljs) {
   var STRING = hljs.inherit(hljs.QUOTE_STRING_MODE, {illegal: ''});
   var PARAMS = {
@@ -3112,7 +2324,7 @@ module.exports = function(hljs) {
     illegal: '//|->|=>|\\[\\['
   };
 };
-},{}],19:[function(require,module,exports){
+},{}],14:[function(require,module,exports){
 module.exports = function(hljs) {
   var CPP = hljs.getLanguage('cpp').exports;
 	return {
@@ -3212,7 +2424,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],20:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 module.exports = function(hljs) {
     //local labels: %?[FB]?[AT]?\d{1,2}\w+
   return {
@@ -3304,7 +2516,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],21:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
 module.exports = function(hljs) {
   return {
     aliases: ['adoc'],
@@ -3492,7 +2704,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],22:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 module.exports = function (hljs) {
   var KEYWORDS =
     'false synchronized int abstract float private char boolean static null if const ' +
@@ -3637,7 +2849,7 @@ module.exports = function (hljs) {
     ]
   };
 };
-},{}],23:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 module.exports = function(hljs) {
   var BACKTICK_ESCAPE = {
     begin: '`[\\s\\S]'
@@ -3696,7 +2908,7 @@ module.exports = function(hljs) {
     ]
   }
 };
-},{}],24:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 module.exports = function(hljs) {
     var KEYWORDS = 'ByRef Case Const ContinueCase ContinueLoop ' +
         'Default Dim Do Else ElseIf EndFunc EndIf EndSelect ' +
@@ -3832,7 +3044,7 @@ module.exports = function(hljs) {
         ]
     }
 };
-},{}],25:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 module.exports = function(hljs) {
   return {
     case_insensitive: true,
@@ -3894,7 +3106,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],26:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 module.exports = function(hljs) {
   var VARIABLE = {
     className: 'variable',
@@ -3947,7 +3159,7 @@ module.exports = function(hljs) {
     ]
   }
 };
-},{}],27:[function(require,module,exports){
+},{}],22:[function(require,module,exports){
 module.exports = function(hljs) {
   return {
     keywords: 'false int abstract private char boolean static null if for true ' +
@@ -3978,7 +3190,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],28:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 module.exports = function(hljs) {
   var VAR = {
     className: 'variable',
@@ -4053,7 +3265,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],29:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 module.exports = function(hljs) {
   return {
     case_insensitive: true,
@@ -4104,7 +3316,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],30:[function(require,module,exports){
+},{}],25:[function(require,module,exports){
 module.exports = function(hljs){
   return {
     contains: [
@@ -4133,7 +3345,7 @@ module.exports = function(hljs){
     ]
   };
 };
-},{}],31:[function(require,module,exports){
+},{}],26:[function(require,module,exports){
 module.exports = function(hljs){
   var LITERAL = {
     className: 'literal',
@@ -4170,7 +3382,7 @@ module.exports = function(hljs){
     ]
   };
 };
-},{}],32:[function(require,module,exports){
+},{}],27:[function(require,module,exports){
 module.exports = function(hljs) {
   var KEYWORDS =
     'div mod in and or not xor asserterror begin case do downto else end exit for if of repeat then to ' +
@@ -4250,7 +3462,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],33:[function(require,module,exports){
+},{}],28:[function(require,module,exports){
 module.exports = function(hljs) {
   return {
     aliases: ['capnp'],
@@ -4299,7 +3511,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],34:[function(require,module,exports){
+},{}],29:[function(require,module,exports){
 module.exports = function(hljs) {
   // 2.3. Identifiers and keywords
   var KEYWORDS =
@@ -4366,7 +3578,7 @@ module.exports = function(hljs) {
     ].concat(EXPRESSIONS)
   };
 };
-},{}],35:[function(require,module,exports){
+},{}],30:[function(require,module,exports){
 module.exports = function(hljs) {
   return {
     aliases: ['clean','icl','dcl'],
@@ -4391,7 +3603,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],36:[function(require,module,exports){
+},{}],31:[function(require,module,exports){
 module.exports = function(hljs) {
   return {
     contains: [
@@ -4406,7 +3618,7 @@ module.exports = function(hljs) {
     ]
   }
 };
-},{}],37:[function(require,module,exports){
+},{}],32:[function(require,module,exports){
 module.exports = function(hljs) {
   var keywords = {
     'builtin-name':
@@ -4502,7 +3714,7 @@ module.exports = function(hljs) {
     contains: [LIST, STRING, HINT, HINT_COL, COMMENT, KEY, COLLECTION, NUMBER, LITERAL]
   }
 };
-},{}],38:[function(require,module,exports){
+},{}],33:[function(require,module,exports){
 module.exports = function(hljs) {
   return {
     aliases: ['cmake.in'],
@@ -4540,7 +3752,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],39:[function(require,module,exports){
+},{}],34:[function(require,module,exports){
 module.exports = function(hljs) {
   var KEYWORDS = {
     keyword:
@@ -4686,7 +3898,7 @@ module.exports = function(hljs) {
     ])
   };
 };
-},{}],40:[function(require,module,exports){
+},{}],35:[function(require,module,exports){
 module.exports = function(hljs) {
   return {
     keywords: {
@@ -4753,7 +3965,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],41:[function(require,module,exports){
+},{}],36:[function(require,module,exports){
 module.exports = function cos (hljs) {
 
   var STRINGS = {
@@ -4877,7 +4089,7 @@ module.exports = function cos (hljs) {
     ]
   };
 };
-},{}],42:[function(require,module,exports){
+},{}],37:[function(require,module,exports){
 module.exports = function(hljs) {
   var CPP_PRIMITIVE_TYPES = {
     className: 'keyword',
@@ -5052,7 +4264,7 @@ module.exports = function(hljs) {
     }
   };
 };
-},{}],43:[function(require,module,exports){
+},{}],38:[function(require,module,exports){
 module.exports = function(hljs) {
   var RESOURCES = 'primitive rsc_template';
 
@@ -5146,7 +4358,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],44:[function(require,module,exports){
+},{}],39:[function(require,module,exports){
 module.exports = function(hljs) {
   var NUM_SUFFIX = '(_[uif](8|16|32|64))?';
   var CRYSTAL_IDENT_RE = '[a-zA-Z_]\\w*[!?=]?';
@@ -5340,7 +4552,7 @@ module.exports = function(hljs) {
     contains: CRYSTAL_DEFAULT_CONTAINS
   };
 };
-},{}],45:[function(require,module,exports){
+},{}],40:[function(require,module,exports){
 module.exports = function(hljs) {
   var KEYWORDS = {
     keyword:
@@ -5517,7 +4729,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],46:[function(require,module,exports){
+},{}],41:[function(require,module,exports){
 module.exports = function(hljs) {
   return {
     case_insensitive: false,
@@ -5539,7 +4751,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],47:[function(require,module,exports){
+},{}],42:[function(require,module,exports){
 module.exports = function(hljs) {
   var IDENT_RE = '[a-zA-Z-][a-zA-Z0-9_-]*';
   var RULE = {
@@ -5644,7 +4856,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],48:[function(require,module,exports){
+},{}],43:[function(require,module,exports){
 module.exports = /**
  * Known issues:
  *
@@ -5902,7 +5114,7 @@ function(hljs) {
     ]
   };
 };
-},{}],49:[function(require,module,exports){
+},{}],44:[function(require,module,exports){
 module.exports = function (hljs) {
   var SUBST = {
     className: 'subst',
@@ -6003,7 +5215,7 @@ module.exports = function (hljs) {
     ]
   }
 };
-},{}],50:[function(require,module,exports){
+},{}],45:[function(require,module,exports){
 module.exports = function(hljs) {
   var KEYWORDS =
     'exports register file shl array record property for mod while set ally label uses raise not ' +
@@ -6072,7 +5284,7 @@ module.exports = function(hljs) {
     ].concat(COMMENT_MODES)
   };
 };
-},{}],51:[function(require,module,exports){
+},{}],46:[function(require,module,exports){
 module.exports = function(hljs) {
   return {
     aliases: ['patch'],
@@ -6112,7 +5324,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],52:[function(require,module,exports){
+},{}],47:[function(require,module,exports){
 module.exports = function(hljs) {
   var FILTER = {
     begin: /\|[A-Za-z]+:?/,
@@ -6176,7 +5388,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],53:[function(require,module,exports){
+},{}],48:[function(require,module,exports){
 module.exports = function(hljs) {
   return {
     aliases: ['bind', 'zone'],
@@ -6205,7 +5417,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],54:[function(require,module,exports){
+},{}],49:[function(require,module,exports){
 module.exports = function(hljs) {
   return {
     aliases: ['docker'],
@@ -6227,7 +5439,7 @@ module.exports = function(hljs) {
     illegal: '</'
   }
 };
-},{}],55:[function(require,module,exports){
+},{}],50:[function(require,module,exports){
 module.exports = function(hljs) {
   var COMMENT = hljs.COMMENT(
     /^\s*@?rem\b/, /$/,
@@ -6279,7 +5491,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],56:[function(require,module,exports){
+},{}],51:[function(require,module,exports){
 module.exports = function(hljs) {
   var QUOTED_PROPERTY = {
     className: 'string',
@@ -6326,7 +5538,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],57:[function(require,module,exports){
+},{}],52:[function(require,module,exports){
 module.exports = function(hljs) {
   var STRINGS = {
     className: 'string',
@@ -6450,7 +5662,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],58:[function(require,module,exports){
+},{}],53:[function(require,module,exports){
 module.exports = function(hljs) {
   var EXPRESSION_KEYWORDS = 'if eq ne lt lte gt gte select default math sep';
   return {
@@ -6482,7 +5694,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],59:[function(require,module,exports){
+},{}],54:[function(require,module,exports){
 module.exports = function(hljs) {
     var commentMode = hljs.COMMENT(/\(\*/, /\*\)/);
 
@@ -6515,7 +5727,7 @@ module.exports = function(hljs) {
         ]
     };
 };
-},{}],60:[function(require,module,exports){
+},{}],55:[function(require,module,exports){
 module.exports = function(hljs) {
   var ELIXIR_IDENT_RE = '[a-zA-Z_][a-zA-Z0-9_]*(\\!|\\?)?';
   var ELIXIR_METHOD_RE = '[a-zA-Z_]\\w*[!?=]?|[-+~]\\@|<<|>>|=~|===?|<=>|[<>]=?|\\*\\*|[-/+%^&*~`|]|\\[\\]=?';
@@ -6612,7 +5824,7 @@ module.exports = function(hljs) {
     contains: ELIXIR_DEFAULT_CONTAINS
   };
 };
-},{}],61:[function(require,module,exports){
+},{}],56:[function(require,module,exports){
 module.exports = function(hljs) {
   var COMMENT = {
     variants: [
@@ -6696,7 +5908,7 @@ module.exports = function(hljs) {
     illegal: /;/
   };
 };
-},{}],62:[function(require,module,exports){
+},{}],57:[function(require,module,exports){
 module.exports = function(hljs) {
   return {
     subLanguage: 'xml',
@@ -6711,7 +5923,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],63:[function(require,module,exports){
+},{}],58:[function(require,module,exports){
 module.exports = function(hljs) {
   return {
     keywords: {
@@ -6757,7 +5969,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],64:[function(require,module,exports){
+},{}],59:[function(require,module,exports){
 module.exports = function(hljs) {
   var BASIC_ATOM_RE = '[a-z\'][a-zA-Z0-9_\']*';
   var FUNCTION_NAME_RE = '(' + BASIC_ATOM_RE + ':' + BASIC_ATOM_RE + '|' + BASIC_ATOM_RE + ')';
@@ -6903,7 +6115,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],65:[function(require,module,exports){
+},{}],60:[function(require,module,exports){
 module.exports = function(hljs) {
   return {
     aliases: ['xlsx', 'xls'],
@@ -6951,7 +6163,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],66:[function(require,module,exports){
+},{}],61:[function(require,module,exports){
 module.exports = function(hljs) {
   return {
     contains: [
@@ -6980,7 +6192,7 @@ module.exports = function(hljs) {
     case_insensitive: true
   };
 };
-},{}],67:[function(require,module,exports){
+},{}],62:[function(require,module,exports){
 module.exports = function (hljs) {
 
     var CHAR = {
@@ -7025,7 +6237,7 @@ module.exports = function (hljs) {
         ]
     };
 };
-},{}],68:[function(require,module,exports){
+},{}],63:[function(require,module,exports){
 module.exports = function(hljs) {
   var PARAMS = {
     className: 'params',
@@ -7096,7 +6308,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],69:[function(require,module,exports){
+},{}],64:[function(require,module,exports){
 module.exports = function(hljs) {
   var TYPEPARAM = {
     begin: '<', end: '>',
@@ -7155,7 +6367,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],70:[function(require,module,exports){
+},{}],65:[function(require,module,exports){
 module.exports = function (hljs) {
   var KEYWORDS = {
     'keyword':
@@ -7309,7 +6521,7 @@ module.exports = function (hljs) {
     ]
   };
 };
-},{}],71:[function(require,module,exports){
+},{}],66:[function(require,module,exports){
 module.exports = function(hljs) {
   var KEYWORDS = {
     keyword: 'and bool break call callexe checkinterrupt clear clearg closeall cls comlog compile ' +
@@ -7533,7 +6745,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],72:[function(require,module,exports){
+},{}],67:[function(require,module,exports){
 module.exports = function(hljs) {
     var GCODE_IDENT_RE = '[A-Z_][A-Z0-9_.]*';
     var GCODE_CLOSE_RE = '\\%';
@@ -7600,7 +6812,7 @@ module.exports = function(hljs) {
         ].concat(GCODE_CODE)
     };
 };
-},{}],73:[function(require,module,exports){
+},{}],68:[function(require,module,exports){
 module.exports = function (hljs) {
   return {
     aliases: ['feature'],
@@ -7637,7 +6849,7 @@ module.exports = function (hljs) {
     ]
   };
 };
-},{}],74:[function(require,module,exports){
+},{}],69:[function(require,module,exports){
 module.exports = function(hljs) {
   return {
     keywords: {
@@ -7754,7 +6966,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],75:[function(require,module,exports){
+},{}],70:[function(require,module,exports){
 module.exports = function(hljs) {
   var GO_KEYWORDS = {
     keyword:
@@ -7808,7 +7020,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],76:[function(require,module,exports){
+},{}],71:[function(require,module,exports){
 module.exports = function(hljs) {
     return {
       keywords: {
@@ -7831,7 +7043,7 @@ module.exports = function(hljs) {
       ]
     }
 };
-},{}],77:[function(require,module,exports){
+},{}],72:[function(require,module,exports){
 module.exports = function(hljs) {
   return {
     case_insensitive: true,
@@ -7866,7 +7078,7 @@ module.exports = function(hljs) {
     ]
   }
 };
-},{}],78:[function(require,module,exports){
+},{}],73:[function(require,module,exports){
 module.exports = function(hljs) {
     return {
         keywords: {
@@ -7960,7 +7172,7 @@ module.exports = function(hljs) {
         illegal: /#|<\//
     }
 };
-},{}],79:[function(require,module,exports){
+},{}],74:[function(require,module,exports){
 module.exports = // TODO support filter tags like :javascript, support inline HTML
 function(hljs) {
   return {
@@ -8067,7 +7279,7 @@ function(hljs) {
     ]
   };
 };
-},{}],80:[function(require,module,exports){
+},{}],75:[function(require,module,exports){
 module.exports = function(hljs) {
   var BUILT_INS = {'builtin-name': 'each in with if else unless bindattr action collection debugger log outlet template unbound view yield'};
   return {
@@ -8101,7 +7313,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],81:[function(require,module,exports){
+},{}],76:[function(require,module,exports){
 module.exports = function(hljs) {
   var COMMENT = {
     variants: [
@@ -8223,7 +7435,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],82:[function(require,module,exports){
+},{}],77:[function(require,module,exports){
 module.exports = function(hljs) {
   var IDENT_RE = '[a-zA-Z_$][a-zA-Z0-9_$]*';
   var IDENT_FUNC_RETURN_TYPE_RE = '([*]|[a-zA-Z_$][a-zA-Z0-9_$]*)';
@@ -8335,7 +7547,7 @@ module.exports = function(hljs) {
     illegal: /<\//
   };
 };
-},{}],83:[function(require,module,exports){
+},{}],78:[function(require,module,exports){
 module.exports = function(hljs) {
   return {
     case_insensitive: true,
@@ -8381,7 +7593,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],84:[function(require,module,exports){
+},{}],79:[function(require,module,exports){
 module.exports = function(hljs) {
   var BUILT_INS = 'action collection component concat debugger each each-in else get hash if input link-to loc log mut outlet partial query-params render textarea unbound unless with yield view';
 
@@ -8452,7 +7664,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],85:[function(require,module,exports){
+},{}],80:[function(require,module,exports){
 module.exports = function(hljs) {
   var VERSION = 'HTTP/[0-9\\.]+';
   return {
@@ -8493,7 +7705,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],86:[function(require,module,exports){
+},{}],81:[function(require,module,exports){
 module.exports = function(hljs) {
   var keywords = {
     'builtin-name':
@@ -8595,7 +7807,7 @@ module.exports = function(hljs) {
     contains: [SHEBANG, LIST, STRING, HINT, HINT_COL, COMMENT, KEY, COLLECTION, NUMBER, LITERAL]
   }
 };
-},{}],87:[function(require,module,exports){
+},{}],82:[function(require,module,exports){
 module.exports = function(hljs) {
   var START_BRACKET = '\\[';
   var END_BRACKET = '\\]';
@@ -8652,7 +7864,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],88:[function(require,module,exports){
+},{}],83:[function(require,module,exports){
 module.exports = function(hljs) {
   var STRING = {
     className: "string",
@@ -8718,7 +7930,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],89:[function(require,module,exports){
+},{}],84:[function(require,module,exports){
 module.exports = function(hljs) {
   var PARAMS = {
     className: 'params',
@@ -8794,7 +8006,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],90:[function(require,module,exports){
+},{}],85:[function(require,module,exports){
 module.exports = function(hljs) {
   var JAVA_IDENT_RE = '[\u00C0-\u02B8a-zA-Z_$][\u00C0-\u02B8a-zA-Z_$0-9]*';
   var GENERIC_IDENT_RE = JAVA_IDENT_RE + '(<' + JAVA_IDENT_RE + '(\\s*,\\s*' + JAVA_IDENT_RE + ')*>)?';
@@ -8902,7 +8114,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],91:[function(require,module,exports){
+},{}],86:[function(require,module,exports){
 module.exports = function(hljs) {
   var IDENT_RE = '[A-Za-z$_][0-9A-Za-z$_]*';
   var KEYWORDS = {
@@ -9073,7 +8285,7 @@ module.exports = function(hljs) {
     illegal: /#(?!!)/
   };
 };
-},{}],92:[function(require,module,exports){
+},{}],87:[function(require,module,exports){
 module.exports = function (hljs) {
   var PARAM = {
     begin: /[\w-]+ *=/, returnBegin: true,
@@ -9120,7 +8332,7 @@ module.exports = function (hljs) {
     ]
   }
 };
-},{}],93:[function(require,module,exports){
+},{}],88:[function(require,module,exports){
 module.exports = function(hljs) {
   var LITERALS = {literal: 'true false null'};
   var TYPES = [
@@ -9157,7 +8369,7 @@ module.exports = function(hljs) {
     illegal: '\\S'
   };
 };
-},{}],94:[function(require,module,exports){
+},{}],89:[function(require,module,exports){
 module.exports = function(hljs) {
   return {
     contains: [
@@ -9181,7 +8393,7 @@ module.exports = function(hljs) {
     ]
   }
 };
-},{}],95:[function(require,module,exports){
+},{}],90:[function(require,module,exports){
 module.exports = function(hljs) {
   // Since there are numerous special names in Julia, it is too much trouble
   // to maintain them by hand. Hence these names (i.e. keywords, literals and
@@ -9343,7 +8555,7 @@ module.exports = function(hljs) {
 
   return DEFAULT;
 };
-},{}],96:[function(require,module,exports){
+},{}],91:[function(require,module,exports){
 module.exports = function(hljs) {
   var KEYWORDS = {
     keyword:
@@ -9517,7 +8729,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],97:[function(require,module,exports){
+},{}],92:[function(require,module,exports){
 module.exports = function(hljs) {
   var LASSO_IDENT_RE = '[a-zA-Z_][\\w.]*';
   var LASSO_ANGLE_RE = '<\\?(lasso(script)?|=)';
@@ -9680,7 +8892,7 @@ module.exports = function(hljs) {
     ].concat(LASSO_CODE)
   };
 };
-},{}],98:[function(require,module,exports){
+},{}],93:[function(require,module,exports){
 module.exports = function(hljs) {
   return {
     contains: [
@@ -9703,7 +8915,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],99:[function(require,module,exports){
+},{}],94:[function(require,module,exports){
 module.exports = function (hljs) {
   return {
     contains: [
@@ -9743,7 +8955,7 @@ module.exports = function (hljs) {
     ]
   };
 };
-},{}],100:[function(require,module,exports){
+},{}],95:[function(require,module,exports){
 module.exports = function(hljs) {
   var IDENT_RE        = '[\\w-]+'; // yes, Less identifiers may begin with a digit
   var INTERP_IDENT_RE = '(' + IDENT_RE + '|@{' + IDENT_RE + '})';
@@ -9883,7 +9095,7 @@ module.exports = function(hljs) {
     contains: RULES
   };
 };
-},{}],101:[function(require,module,exports){
+},{}],96:[function(require,module,exports){
 module.exports = function(hljs) {
   var LISP_IDENT_RE = '[a-zA-Z_\\-\\+\\*\\/\\<\\=\\>\\&\\#][a-zA-Z0-9_\\-\\+\\*\\/\\<\\=\\>\\&\\#!]*';
   var MEC_RE = '\\|[^]*?\\|';
@@ -9986,7 +9198,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],102:[function(require,module,exports){
+},{}],97:[function(require,module,exports){
 module.exports = function(hljs) {
   var VARIABLE = {
     begin: '\\b[gtps][A-Z]+[A-Za-z0-9_\\-]*\\b|\\$_[A-Z]+',
@@ -10143,7 +9355,7 @@ module.exports = function(hljs) {
     illegal: ';$|^\\[|^=|&|{'
   };
 };
-},{}],103:[function(require,module,exports){
+},{}],98:[function(require,module,exports){
 module.exports = function(hljs) {
   var KEYWORDS = {
     keyword:
@@ -10292,7 +9504,7 @@ module.exports = function(hljs) {
     ])
   };
 };
-},{}],104:[function(require,module,exports){
+},{}],99:[function(require,module,exports){
 module.exports = function(hljs) {
   var identifier = '([-a-zA-Z$._][\\w\\-$.]*)';
   return {
@@ -10381,7 +9593,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],105:[function(require,module,exports){
+},{}],100:[function(require,module,exports){
 module.exports = function(hljs) {
 
     var LSL_STRING_ESCAPE_CHARS = {
@@ -10464,7 +9676,7 @@ module.exports = function(hljs) {
         ]
     };
 };
-},{}],106:[function(require,module,exports){
+},{}],101:[function(require,module,exports){
 module.exports = function(hljs) {
   var OPENING_LONG_BRACKET = '\\[=*\\[';
   var CLOSING_LONG_BRACKET = '\\]=*\\]';
@@ -10530,7 +9742,7 @@ module.exports = function(hljs) {
     ])
   };
 };
-},{}],107:[function(require,module,exports){
+},{}],102:[function(require,module,exports){
 module.exports = function(hljs) {
   /* Variables: simple (eg $(var)) and special (eg $@) */
   var VARIABLE = {
@@ -10611,7 +9823,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],108:[function(require,module,exports){
+},{}],103:[function(require,module,exports){
 module.exports = function(hljs) {
   return {
     aliases: ['md', 'mkdown', 'mkd'],
@@ -10719,7 +9931,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],109:[function(require,module,exports){
+},{}],104:[function(require,module,exports){
 module.exports = function(hljs) {
   return {
     aliases: ['mma'],
@@ -10777,7 +9989,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],110:[function(require,module,exports){
+},{}],105:[function(require,module,exports){
 module.exports = function(hljs) {
   var COMMON_CONTAINS = [
     hljs.C_NUMBER_MODE,
@@ -10865,7 +10077,7 @@ module.exports = function(hljs) {
     ].concat(COMMON_CONTAINS)
   };
 };
-},{}],111:[function(require,module,exports){
+},{}],106:[function(require,module,exports){
 module.exports = function(hljs) {
   var KEYWORDS = 'if then else elseif for thru do while unless step in and or not';
   var LITERALS = 'true false unknown inf minf ind und %e %i %pi %phi %gamma';
@@ -11271,7 +10483,7 @@ module.exports = function(hljs) {
     illegal: /@/
   }
 };
-},{}],112:[function(require,module,exports){
+},{}],107:[function(require,module,exports){
 module.exports = function(hljs) {
   return {
     keywords:
@@ -11496,7 +10708,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],113:[function(require,module,exports){
+},{}],108:[function(require,module,exports){
 module.exports = function(hljs) {
   var KEYWORDS = {
     keyword:
@@ -11578,7 +10790,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],114:[function(require,module,exports){
+},{}],109:[function(require,module,exports){
 module.exports = function(hljs) {
     //local labels: %?[FB]?[AT]?\d{1,2}\w+
   return {
@@ -11664,7 +10876,7 @@ module.exports = function(hljs) {
     illegal: '\/'
   };
 };
-},{}],115:[function(require,module,exports){
+},{}],110:[function(require,module,exports){
 module.exports = function(hljs) {
   return {
     keywords:
@@ -11683,7 +10895,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],116:[function(require,module,exports){
+},{}],111:[function(require,module,exports){
 module.exports = function(hljs) {
   return {
     subLanguage: 'xml',
@@ -11708,7 +10920,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],117:[function(require,module,exports){
+},{}],112:[function(require,module,exports){
 module.exports = function(hljs) {
   var NUMBER = {
     className: 'number', relevance: 0,
@@ -11783,7 +10995,7 @@ module.exports = function(hljs) {
     ]
   }
 };
-},{}],118:[function(require,module,exports){
+},{}],113:[function(require,module,exports){
 module.exports = function(hljs) {
   var KEYWORDS = {
     keyword:
@@ -11895,7 +11107,7 @@ module.exports = function(hljs) {
     ])
   };
 };
-},{}],119:[function(require,module,exports){
+},{}],114:[function(require,module,exports){
 module.exports = function(hljs) {
   return {
     case_insensitive: true,
@@ -11964,7 +11176,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],120:[function(require,module,exports){
+},{}],115:[function(require,module,exports){
 module.exports = function(hljs) {
   var VAR = {
     className: 'variable',
@@ -12057,7 +11269,7 @@ module.exports = function(hljs) {
     illegal: '[^\\s\\}]'
   };
 };
-},{}],121:[function(require,module,exports){
+},{}],116:[function(require,module,exports){
 module.exports = function(hljs) {
   return {
     aliases: ['nim'],
@@ -12112,7 +11324,7 @@ module.exports = function(hljs) {
     ]
   }
 };
-},{}],122:[function(require,module,exports){
+},{}],117:[function(require,module,exports){
 module.exports = function(hljs) {
   var NIX_KEYWORDS = {
     keyword:
@@ -12161,7 +11373,7 @@ module.exports = function(hljs) {
     contains: EXPRESSIONS
   };
 };
-},{}],123:[function(require,module,exports){
+},{}],118:[function(require,module,exports){
 module.exports = function(hljs) {
   var CONSTANTS = {
     className: 'variable',
@@ -12267,7 +11479,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],124:[function(require,module,exports){
+},{}],119:[function(require,module,exports){
 module.exports = function(hljs) {
   var API_CLASS = {
     className: 'built_in',
@@ -12358,7 +11570,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],125:[function(require,module,exports){
+},{}],120:[function(require,module,exports){
 module.exports = function(hljs) {
   /* missing support for heredoc-like string (OCaml 4.0.2+) */
   return {
@@ -12429,7 +11641,7 @@ module.exports = function(hljs) {
     ]
   }
 };
-},{}],126:[function(require,module,exports){
+},{}],121:[function(require,module,exports){
 module.exports = function(hljs) {
 	var SPECIAL_VARS = {
 		className: 'keyword',
@@ -12486,7 +11698,7 @@ module.exports = function(hljs) {
 		]
 	}
 };
-},{}],127:[function(require,module,exports){
+},{}],122:[function(require,module,exports){
 module.exports = function(hljs) {
   var OXYGENE_KEYWORDS = 'abstract add and array as asc aspect assembly async begin break block by case class concat const copy constructor continue '+
     'create default delegate desc distinct div do downto dynamic each else empty end ensure enum equals event except exit extension external false '+
@@ -12556,7 +11768,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],128:[function(require,module,exports){
+},{}],123:[function(require,module,exports){
 module.exports = function(hljs) {
   var CURLY_SUBCOMMENT = hljs.COMMENT(
     '{',
@@ -12604,7 +11816,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],129:[function(require,module,exports){
+},{}],124:[function(require,module,exports){
 module.exports = function(hljs) {
   var PERL_KEYWORDS = 'getpwent getservent quotemeta msgrcv scalar kill dbmclose undef lc ' +
     'ma syswrite tr send umask sysopen shmwrite vec qx utime local oct semctl localtime ' +
@@ -12761,7 +11973,7 @@ module.exports = function(hljs) {
     contains: PERL_DEFAULT_CONTAINS
   };
 };
-},{}],130:[function(require,module,exports){
+},{}],125:[function(require,module,exports){
 module.exports = function(hljs) {
   var MACRO = {
     className: 'variable',
@@ -12813,7 +12025,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],131:[function(require,module,exports){
+},{}],126:[function(require,module,exports){
 module.exports = function(hljs) {
   var VARIABLE = {
     begin: '\\$+[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*'
@@ -12940,7 +12152,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],132:[function(require,module,exports){
+},{}],127:[function(require,module,exports){
 module.exports = function(hljs) {
   var KEYWORDS = {
     keyword:
@@ -13031,7 +12243,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],133:[function(require,module,exports){
+},{}],128:[function(require,module,exports){
 module.exports = function(hljs) {
   var BACKTICK_ESCAPE = {
     begin: '`[\\s\\S]',
@@ -13112,7 +12324,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],134:[function(require,module,exports){
+},{}],129:[function(require,module,exports){
 module.exports = function(hljs) {
   return {
     keywords: {
@@ -13160,7 +12372,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],135:[function(require,module,exports){
+},{}],130:[function(require,module,exports){
 module.exports = function(hljs) {
   return {
     contains: [
@@ -13190,7 +12402,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],136:[function(require,module,exports){
+},{}],131:[function(require,module,exports){
 module.exports = function(hljs) {
 
   var ATOM = {
@@ -13278,7 +12490,7 @@ module.exports = function(hljs) {
     ])
   };
 };
-},{}],137:[function(require,module,exports){
+},{}],132:[function(require,module,exports){
 module.exports = function(hljs) {
   return {
     keywords: {
@@ -13314,7 +12526,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],138:[function(require,module,exports){
+},{}],133:[function(require,module,exports){
 module.exports = function(hljs) {
 
   var PUPPET_KEYWORDS = {
@@ -13429,7 +12641,7 @@ module.exports = function(hljs) {
     ]
   }
 };
-},{}],139:[function(require,module,exports){
+},{}],134:[function(require,module,exports){
 module.exports = // Base deafult colors in PB IDE: background: #FFFFDF; foreground: #000000;
 
 function(hljs) {
@@ -13487,7 +12699,7 @@ function(hljs) {
     ]
   };
 };
-},{}],140:[function(require,module,exports){
+},{}],135:[function(require,module,exports){
 module.exports = function(hljs) {
   var KEYWORDS = {
     keyword:
@@ -13603,7 +12815,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],141:[function(require,module,exports){
+},{}],136:[function(require,module,exports){
 module.exports = function(hljs) {
   var Q_KEYWORDS = {
   keyword:
@@ -13626,7 +12838,7 @@ module.exports = function(hljs) {
      ]
   };
 };
-},{}],142:[function(require,module,exports){
+},{}],137:[function(require,module,exports){
 module.exports = function(hljs) {
   var KEYWORDS = {
       keyword:
@@ -13795,7 +13007,7 @@ module.exports = function(hljs) {
     illegal: /#/
   };
 };
-},{}],143:[function(require,module,exports){
+},{}],138:[function(require,module,exports){
 module.exports = function(hljs) {
   var IDENT_RE = '([a-zA-Z]|\\.[a-zA-Z.])[a-zA-Z0-9._]*';
 
@@ -13865,7 +13077,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],144:[function(require,module,exports){
+},{}],139:[function(require,module,exports){
 module.exports = function(hljs) {
   return {
     keywords:
@@ -13892,7 +13104,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],145:[function(require,module,exports){
+},{}],140:[function(require,module,exports){
 module.exports = function(hljs) {
   var IDENTIFIER = '[a-zA-Z-_][^\\n{]+\\{';
 
@@ -13959,7 +13171,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],146:[function(require,module,exports){
+},{}],141:[function(require,module,exports){
 module.exports = // Colors from RouterOS terminal:
 //   green        - #0E9A00
 //   teal         - #0C9A9A
@@ -14118,7 +13330,7 @@ function(hljs) {
     ]
   };
 };
-},{}],147:[function(require,module,exports){
+},{}],142:[function(require,module,exports){
 module.exports = function(hljs) {
   return {
     keywords: {
@@ -14154,7 +13366,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],148:[function(require,module,exports){
+},{}],143:[function(require,module,exports){
 module.exports = function(hljs) {
   var RUBY_METHOD_RE = '[a-zA-Z_]\\w*[!?=]?|[-+~]\\@|<<|>>|=~|===?|<=>|[<>]=?|\\*\\*|[-/+%^&*~`|]|\\[\\]=?';
   var RUBY_KEYWORDS = {
@@ -14331,7 +13543,7 @@ module.exports = function(hljs) {
     contains: COMMENT_MODES.concat(IRB_DEFAULT).concat(RUBY_DEFAULT_CONTAINS)
   };
 };
-},{}],149:[function(require,module,exports){
+},{}],144:[function(require,module,exports){
 module.exports = function(hljs) {
   return {
     keywords: {
@@ -14392,7 +13604,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],150:[function(require,module,exports){
+},{}],145:[function(require,module,exports){
 module.exports = function(hljs) {
   var NUM_SUFFIX = '([ui](8|16|32|64|128|size)|f(32|64))\?';
   var KEYWORDS =
@@ -14500,7 +13712,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],151:[function(require,module,exports){
+},{}],146:[function(require,module,exports){
 module.exports = function(hljs) {
 
   var ANNOTATION = { className: 'meta', begin: '@[A-Za-z]+' };
@@ -14615,7 +13827,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],152:[function(require,module,exports){
+},{}],147:[function(require,module,exports){
 module.exports = function(hljs) {
   var SCHEME_IDENT_RE = '[^\\(\\)\\[\\]\\{\\}",\'`;#|\\\\\\s]+';
   var SCHEME_SIMPLE_NUMBER_RE = '(\\-|\\+)?\\d+([./]\\d+)?';
@@ -14759,7 +13971,7 @@ module.exports = function(hljs) {
     contains: [SHEBANG, NUMBER, STRING, QUOTED_IDENT, QUOTED_LIST, LIST].concat(COMMENT_MODES)
   };
 };
-},{}],153:[function(require,module,exports){
+},{}],148:[function(require,module,exports){
 module.exports = function(hljs) {
 
   var COMMON_CONTAINS = [
@@ -14813,7 +14025,7 @@ module.exports = function(hljs) {
     ].concat(COMMON_CONTAINS)
   };
 };
-},{}],154:[function(require,module,exports){
+},{}],149:[function(require,module,exports){
 module.exports = function(hljs) {
   var IDENT_RE = '[a-zA-Z-][a-zA-Z0-9_-]*';
   var VARIABLE = {
@@ -14911,7 +14123,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],155:[function(require,module,exports){
+},{}],150:[function(require,module,exports){
 module.exports = function(hljs) {
   return {
     aliases: ['console'],
@@ -14926,7 +14138,7 @@ module.exports = function(hljs) {
     ]
   }
 };
-},{}],156:[function(require,module,exports){
+},{}],151:[function(require,module,exports){
 module.exports = function(hljs) {
   var smali_instr_low_prio = ['add', 'and', 'cmp', 'cmpg', 'cmpl', 'const', 'div', 'double', 'float', 'goto', 'if', 'int', 'long', 'move', 'mul', 'neg', 'new', 'nop', 'not', 'or', 'rem', 'return', 'shl', 'shr', 'sput', 'sub', 'throw', 'ushr', 'xor'];
   var smali_instr_high_prio = ['aget', 'aput', 'array', 'check', 'execute', 'fill', 'filled', 'goto/16', 'goto/32', 'iget', 'instance', 'invoke', 'iput', 'monitor', 'packed', 'sget', 'sparse'];
@@ -14982,7 +14194,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],157:[function(require,module,exports){
+},{}],152:[function(require,module,exports){
 module.exports = function(hljs) {
   var VAR_IDENT_RE = '[a-z][a-zA-Z0-9_]*';
   var CHAR = {
@@ -15032,7 +14244,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],158:[function(require,module,exports){
+},{}],153:[function(require,module,exports){
 module.exports = function(hljs) {
   return {
     aliases: ['ml'],
@@ -15098,7 +14310,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],159:[function(require,module,exports){
+},{}],154:[function(require,module,exports){
 module.exports = function(hljs) {
   var CPP = hljs.getLanguage('cpp').exports;
 
@@ -15469,7 +14681,7 @@ module.exports = function(hljs) {
     illegal: /#/
   };
 };
-},{}],160:[function(require,module,exports){
+},{}],155:[function(require,module,exports){
 module.exports = function(hljs) {
   var COMMENT_MODE = hljs.COMMENT('--', '$');
   return {
@@ -15629,7 +14841,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],161:[function(require,module,exports){
+},{}],156:[function(require,module,exports){
 module.exports = function(hljs) {
   return {
     contains: [
@@ -15712,7 +14924,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],162:[function(require,module,exports){
+},{}],157:[function(require,module,exports){
 module.exports = function(hljs) {
   return {
     aliases: ['do', 'ado'],
@@ -15750,7 +14962,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],163:[function(require,module,exports){
+},{}],158:[function(require,module,exports){
 module.exports = function(hljs) {
   var STEP21_IDENT_RE = '[A-Z_][A-Z0-9_.]*';
   var STEP21_KEYWORDS = {
@@ -15797,7 +15009,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],164:[function(require,module,exports){
+},{}],159:[function(require,module,exports){
 module.exports = function(hljs) {
 
   var VARIABLE = {
@@ -16251,7 +15463,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],165:[function(require,module,exports){
+},{}],160:[function(require,module,exports){
 module.exports = function(hljs) {
   var DETAILS = {
     className: 'string',
@@ -16285,7 +15497,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],166:[function(require,module,exports){
+},{}],161:[function(require,module,exports){
 module.exports = function(hljs) {
   var SWIFT_KEYWORDS = {
       keyword: '__COLUMN__ __FILE__ __FUNCTION__ __LINE__ as as! as? associativity ' +
@@ -16402,7 +15614,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],167:[function(require,module,exports){
+},{}],162:[function(require,module,exports){
 module.exports = function(hljs) {
 
   var COMMENT = {
@@ -16446,7 +15658,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],168:[function(require,module,exports){
+},{}],163:[function(require,module,exports){
 module.exports = function(hljs) {
   return {
     case_insensitive: true,
@@ -16482,7 +15694,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],169:[function(require,module,exports){
+},{}],164:[function(require,module,exports){
 module.exports = function(hljs) {
   return {
     aliases: ['tk'],
@@ -16543,7 +15755,7 @@ module.exports = function(hljs) {
     ]
   }
 };
-},{}],170:[function(require,module,exports){
+},{}],165:[function(require,module,exports){
 module.exports = function(hljs) {
   var COMMAND = {
     className: 'tag',
@@ -16605,7 +15817,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],171:[function(require,module,exports){
+},{}],166:[function(require,module,exports){
 module.exports = function(hljs) {
   var BUILT_IN_TYPES = 'bool byte i16 i32 i64 double string binary';
   return {
@@ -16640,7 +15852,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],172:[function(require,module,exports){
+},{}],167:[function(require,module,exports){
 module.exports = function(hljs) {
   var TPID = {
     className: 'number',
@@ -16724,7 +15936,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],173:[function(require,module,exports){
+},{}],168:[function(require,module,exports){
 module.exports = function(hljs) {
   var PARAMS = {
     className: 'params',
@@ -16790,7 +16002,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],174:[function(require,module,exports){
+},{}],169:[function(require,module,exports){
 module.exports = function(hljs) {
   var KEYWORDS = {
     keyword:
@@ -16946,7 +16158,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],175:[function(require,module,exports){
+},{}],170:[function(require,module,exports){
 module.exports = function(hljs) {
   return {
     keywords: {
@@ -16996,7 +16208,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],176:[function(require,module,exports){
+},{}],171:[function(require,module,exports){
 module.exports = function(hljs) {
   return {
     aliases: ['vb'],
@@ -17052,7 +16264,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],177:[function(require,module,exports){
+},{}],172:[function(require,module,exports){
 module.exports = function(hljs) {
   return {
     subLanguage: 'xml',
@@ -17064,7 +16276,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],178:[function(require,module,exports){
+},{}],173:[function(require,module,exports){
 module.exports = function(hljs) {
   return {
     aliases: ['vbs'],
@@ -17103,7 +16315,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],179:[function(require,module,exports){
+},{}],174:[function(require,module,exports){
 module.exports = function(hljs) {
   var SV_KEYWORDS = {
     keyword:
@@ -17202,7 +16414,7 @@ module.exports = function(hljs) {
     ]
   }; // return
 };
-},{}],180:[function(require,module,exports){
+},{}],175:[function(require,module,exports){
 module.exports = function(hljs) {
   // Regular expression for VHDL numeric literals.
 
@@ -17263,7 +16475,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],181:[function(require,module,exports){
+},{}],176:[function(require,module,exports){
 module.exports = function(hljs) {
   return {
     lexemes: /[!#@\w]+/,
@@ -17369,7 +16581,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],182:[function(require,module,exports){
+},{}],177:[function(require,module,exports){
 module.exports = function(hljs) {
   return {
     case_insensitive: true,
@@ -17505,7 +16717,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],183:[function(require,module,exports){
+},{}],178:[function(require,module,exports){
 module.exports = function(hljs) {
   var BUILTIN_MODULES =
     'ObjectLoader Animate MovieCredits Slides Filters Shading Materials LensFlare Mapping VLCAudioVideo ' +
@@ -17578,7 +16790,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],184:[function(require,module,exports){
+},{}],179:[function(require,module,exports){
 module.exports = function(hljs) {
   var XML_IDENT_RE = '[A-Za-z0-9\\._:-]+';
   var TAG_INTERNALS = {
@@ -17681,7 +16893,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],185:[function(require,module,exports){
+},{}],180:[function(require,module,exports){
 module.exports = function(hljs) {
   var KEYWORDS = 'for let if while then else return where group by xquery encoding version' +
     'module namespace boundary-space preserve strip default collation base-uri ordering' +
@@ -17752,7 +16964,7 @@ module.exports = function(hljs) {
     contains: CONTAINS
   };
 };
-},{}],186:[function(require,module,exports){
+},{}],181:[function(require,module,exports){
 module.exports = function(hljs) {
   var LITERALS = 'true false yes no null';
 
@@ -17840,7 +17052,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],187:[function(require,module,exports){
+},{}],182:[function(require,module,exports){
 module.exports = function(hljs) {
   var STRING = {
     className: 'string',
@@ -17947,4 +17159,962 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}]},{},[6]);
+},{}],183:[function(require,module,exports){
+let Menu
+
+class Accelerators
+{
+    /**
+     * Handles all keyboard input for the menu and user-registered keys registered through Menu.GlobalAccelerator
+     * @param {object} options
+     * @param {HTMLElement} [options.div] used for global accelerators (usually attached to document.body)
+     * @param {Menu} [options.menu] Menu to attach accelerators
+     */
+    constructor(options)
+    {
+        Menu = require('./menu')
+        this.menuKeys = {}
+        this.keys = {}
+        if (options.div)
+        {
+            options.div.addEventListener('keydown', (e) => this.keyDown(this, e))
+        }
+        else
+        {
+            options.menu.div.addEventListener('keydown', (e) => this.keyDown(this, e))
+        }
+    }
+
+    /**
+     * Register a shortcut key for use by an open menu
+     * @param {KeyCodes} letter
+     * @param {MenuItem} menuItem
+     * @param {boolean} applicationMenu
+     * @private
+     */
+    registerMenuShortcut(letter, menuItem)
+    {
+        if (letter)
+        {
+            const keyCode = (menuItem.menu.applicationMenu ? 'alt+' : '') + letter
+            this.menuKeys[Accelerators.prepareKey(keyCode)] = (e) =>
+            {
+                menuItem.handleClick(e)
+                e.stopPropagation()
+                e.preventDefault()
+            }
+        }
+    }
+
+    /**
+     * Register special shortcut keys for menu
+     * @param {MenuItem} menuItem
+     * @private
+     */
+    registerMenuSpecial(menu)
+    {
+        this.menuKeys['escape'] = () => Menu.getApplicationMenu().closeAll()
+        this.menuKeys['enter'] = (e) => menu.enter(e)
+        this.menuKeys['space'] = (e) => menu.enter(e)
+        this.menuKeys['arrowright'] = (e) => menu.move(e, 'right')
+        this.menuKeys['arrowleft'] = (e) => menu.move(e, 'left')
+        this.menuKeys['arrowup'] = (e) => menu.move(e, 'up')
+        this.menuKeys['arrowdown'] = (e) => menu.move(e, 'down')
+    }
+
+    /**
+     * Removes menu shortcuts
+     * @private
+     */
+    unregisterMenuShortcuts()
+    {
+        this.menuKeys = {}
+    }
+
+    /**
+     * Keycodes definition. In the form of modifier[+modifier...]+key
+     * <p>For example: ctrl+shift+e</p>
+     * <p>KeyCodes are case insensitive (i.e., shift+a is the same as Shift+A)</p>
+     * <pre>
+     * Modifiers:
+     *    ctrl, alt, shift, meta, (ctrl aliases: command, control, commandorcontrol)
+     * </pre>
+     * <pre>
+     * Keys:
+     *    escape, 0-9, minus, equal, backspace, tab, a-z, backetleft, bracketright, semicolon, quote,
+     *    backquote, backslash, comma, period, slash, numpadmultiply, space, capslock, f1-f24, pause,
+     *    scrolllock, printscreen, home, arrowup, arrowleft, arrowright, arrowdown, pageup, pagedown,
+     *    end, insert, delete, enter, shiftleft, shiftright, ctrlleft, ctrlright, altleft, altright, shiftleft,
+     *    shiftright, numlock, numpad...
+     * </pre>
+     * For OS-specific codes and a more detailed explanation see {@link https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/code}. Also note that 'Digit' and 'Key' are removed from the code to make it easier to type.
+     *
+     * @typedef {string} Accelerators~KeyCodes
+     */
+
+    /**
+     * translate a user-provided keycode
+     * @param {KeyCodes} keyCode
+     * @return {KeyCodes} formatted and sorted keyCode
+     * @private
+     */
+    static prepareKey(keyCode)
+    {
+        let modifiers = []
+        let key = ''
+        keyCode = keyCode.toLowerCase()
+        if (keyCode.indexOf('+') !== -1)
+        {
+            const split = keyCode.toLowerCase().split('+')
+            for (let i = 0; i < split.length - 1; i++)
+            {
+                let modifier = split[i]
+                modifier = modifier.replace('commandorcontrol', 'ctrl')
+                modifier = modifier.replace('command', 'ctrl')
+                modifier = modifier.replace('control', 'ctrl')
+                modifiers.push(modifier)
+            }
+            modifiers = modifiers.sort((a, b) => { return a[0] > b[0] ? 1 : a[0] < b[0] ? -1 : 0 })
+            for (let part of modifiers)
+            {
+                key += part + '+'
+            }
+            key += split[split.length - 1]
+        }
+        else
+        {
+            key = keyCode
+        }
+        return key
+    }
+
+    /**
+     * Make the KeyCode pretty for printing on the menu
+     * @param {KeyCode} keyCode
+     * @return {string}
+     * @private
+     */
+    static prettifyKey(keyCode)
+    {
+        keyCode = Accelerators.prepareKey(keyCode)
+        let key = ''
+        if (keyCode.indexOf('+') !== -1)
+        {
+            const split = keyCode.toLowerCase().split('+')
+            for (let i = 0; i < split.length - 1; i++)
+            {
+                let modifier = split[i]
+                key += modifier[0].toUpperCase() + modifier.substr(1) + '+'
+            }
+            key += split[split.length - 1].toUpperCase()
+        }
+        else
+        {
+            key = keyCode.toUpperCase()
+        }
+        return key
+    }
+
+    /**
+     * register a key as a global accelerator
+     * @param {KeyCodes} keyCode (e.g., Ctrl+shift+E)
+     * @param {function} callback
+     */
+    register(keyCode, callback)
+    {
+        this.keys[Accelerators.prepareKey(keyCode)] = callback
+    }
+
+    keyDown(accelerator, e)
+    {
+        const modifiers = []
+        if (e.altKey)
+        {
+            modifiers.push('alt')
+        }
+        if (e.ctrlKey)
+        {
+            modifiers.push('ctrl')
+        }
+        if (e.metaKey)
+        {
+            modifiers.push('meta')
+        }
+        if (e.shiftKey)
+        {
+            modifiers.push('shift')
+        }
+        let keyCode = ''
+        for (let modifier of modifiers)
+        {
+            keyCode = modifier + '+'
+        }
+        let translate = e.code.toLowerCase()
+        translate = translate.replace('digit', '')
+        translate = translate.replace('key', '')
+        keyCode += translate
+        if (this.menuKeys[keyCode])
+        {
+            this.menuKeys[keyCode](e, this)
+        }
+        else if (this.keys[keyCode])
+        {
+            this.keys[keyCode](e, this)
+        }
+    }
+}
+
+module.exports = Accelerators
+},{"./menu":185}],184:[function(require,module,exports){
+module.exports = function (options)
+{
+    options = options || {}
+    const object = document.createElement(options.type || 'div')
+    if (options.parent)
+    {
+        options.parent.appendChild(object)
+    }
+    if (options.styles)
+    {
+        for (let style in options.styles)
+        {
+            object.style[style] = options.styles[style]
+        }
+    }
+    if (options.html)
+    {
+        object.innerHTML = options.html
+    }
+    return object
+}
+},{}],185:[function(require,module,exports){
+const Styles =   require('./styles')
+const MenuItem = require('./menuItem')
+const Accelerators = require('./accelerators')
+const html = require('./html')
+
+let _accelerator, _application
+
+class Menu
+{
+    /**
+     * creates a menu bar
+     * @param {object} [options]
+     * @param {object} [options.styles] additional CSS styles for menu
+     */
+    constructor(options)
+    {
+        options = options || {}
+        this.div = document.createElement('div')
+        this.styles = options.styles
+        this.children = []
+        this.applyStyles(Styles.MenuStyle)
+    }
+
+    /**
+     * append a MenuItem to the Menu
+     * @param {MenuItem} menuItem
+     */
+    append(menuItem)
+    {
+        if (menuItem.submenu)
+        {
+            menuItem.submenu.menu = this
+        }
+        menuItem.menu = this
+        this.div.appendChild(menuItem.div)
+        if (menuItem.type !== 'separator')
+        {
+            this.children.push(menuItem)
+        }
+    }
+
+    /**
+     * inserts a MenuItem into the Menu
+     * @param {number} pos
+     * @param {MenuItem} menuItem
+     */
+    insert(pos, menuItem)
+    {
+        if (pos >= this.div.childNodes.length)
+        {
+            this.append(menuItem)
+        }
+        else
+        {
+            if (menuItem.submenu)
+            {
+                menuItem.submenu.menu = this
+            }
+            menuItem.menu = this
+            this.div.insertBefore(menuItem.div, this.div.childNodes[pos])
+            if (menuItem.type !== 'separator')
+            {
+                this.children.splice(pos, 0, menuItem)
+            }
+        }
+    }
+
+    hide()
+    {
+        let current = this.menu.showing
+        while (current && current.submenu)
+        {
+            current.div.style.backgroundColor = 'transparent'
+            current.submenu.div.remove()
+            let next = current.submenu.showing
+            if (next)
+            {
+                current.submenu.showing.div.style.backgroundColor = 'transparent'
+                current.submenu.showing = null
+            }
+            current = next
+        }
+    }
+
+    show(menuItem)
+    {
+        Menu.GlobalAccelarator.unregisterMenuShortcuts()
+        if (this.menu && this.menu.showing === menuItem)
+        {
+            this.hide()
+            this.menu.showing = null
+            this.div.remove()
+            this.menu.showAccelerators()
+        }
+        else
+        {
+            if (this.menu)
+            {
+                if (this.menu.showing && this.menu.children.indexOf(menuItem) !== -1)
+                {
+                    this.hide()
+                }
+                this.menu.showing = menuItem
+                this.menu.hideAccelerators()
+            }
+            const div = menuItem.div
+            const parent = this.menu.div
+            if (this.menu.applicationMenu)
+            {
+                this.div.style.left = div.offsetLeft + 'px'
+                this.div.style.top = div.offsetTop + div.offsetHeight + 'px'
+            }
+            else
+            {
+                this.div.style.left = parent.offsetLeft + parent.offsetWidth - Styles.Overlap + 'px'
+                this.div.style.top = parent.offsetTop + div.offsetTop - Styles.Overlap + 'px'
+            }
+            this.attached = menuItem
+            this.showAccelerators()
+            this.getApplicationDiv().appendChild(this.div)
+            let label = 0, accelerator = 0, arrow = 0, checked = 0
+            for (let child of this.children)
+            {
+                child.check.style.width = 'auto'
+                child.label.style.width = 'auto'
+                child.accelerator.style.width = 'auto'
+                child.arrow.style.width = 'auto'
+                if (child.type === 'checkbox')
+                {
+                    checked = Styles.MinimumColumnWidth
+                }
+                if (child.submenu)
+                {
+                    arrow = Styles.MinimumColumnWidth
+                }
+            }
+            for (let child of this.children)
+            {
+                const childLabel = child.label.offsetWidth * 2
+                label = childLabel > label ? childLabel : label
+                const childAccelerator = child.accelerator.offsetWidth
+                accelerator = childAccelerator > accelerator ? childAccelerator : accelerator
+                if (child.submenu)
+                {
+                    arrow = child.arrow.offsetWidth
+                }
+            }
+            for (let child of this.children)
+            {
+                child.check.style.width = checked + 'px'
+                child.label.style.width = label + 'px'
+                child.accelerator.style.width = accelerator + 'px'
+                child.arrow.style.width = arrow + 'px'
+            }
+            if (this.div.offsetLeft + this.div.offsetWidth > window.innerWidth)
+            {
+                this.div.style.left = window.innerWidth - this.div.offsetWidth + 'px'
+            }
+            if (this.div.offsetTop + this.div.offsetHeight > window.innerHeight)
+            {
+                this.div.style.top = window.innerHeight - this.div.offsetHeight + 'px'
+            }
+        }
+    }
+
+    applyStyles(base)
+    {
+        const styles = {}
+        for (let style in base)
+        {
+            styles[style] = base[style]
+        }
+        if (this.styles)
+        {
+            for (let style in this.styles)
+            {
+                styles[style] = this.styles[style]
+            }
+        }
+        for (let style in styles)
+        {
+            this.div.style[style] = styles[style]
+        }
+    }
+
+    showAccelerators()
+    {
+        for (let child of this.children)
+        {
+            child.showShortcut()
+            if (child.type !== 'separator')
+            {
+                const index = child.text.indexOf('&')
+                if (index !== -1)
+                {
+                    Menu.GlobalAccelarator.registerMenuShortcut(child.text[index + 1], child)
+                }
+            }
+        }
+        if (!this.applicationMenu)
+        {
+            Menu.GlobalAccelarator.registerMenuSpecial(this)
+        }
+    }
+
+    hideAccelerators()
+    {
+        for (let child of this.children)
+        {
+            child.hideShortcut()
+        }
+    }
+
+    closeAll()
+    {
+        if (this.showing)
+        {
+            let menu = this
+            while (menu.showing)
+            {
+                menu = menu.showing.submenu
+            }
+            while (menu && !menu.applicationMenu)
+            {
+                if (menu.showing)
+                {
+                    menu.showing.div.style.backgroundColor = 'transparent'
+                    menu.showing = null
+                }
+                menu.div.remove()
+                menu = menu.menu
+            }
+            if (menu)
+            {
+                menu.showing.div.style.background = 'transparent'
+                menu.showing = null
+                menu.showAccelerators()
+            }
+        }
+    }
+
+    getApplicationDiv()
+    {
+        return _application
+    }
+
+    /**
+     * move to the next child pane
+     * @param {string} direction (left or right)
+     * @private
+     */
+    moveChild(direction)
+    {
+        const parent = this.selector.menu.menu
+        let index = parent.children.indexOf(parent.showing)
+        if (direction === 'left')
+        {
+            index--
+            index = (index < 0) ? parent.children.length - 1 : index
+        }
+        else
+        {
+            index++
+            index = (index === parent.children.length) ? 0 : index
+        }
+        parent.children[index].handleClick({})
+        this.selector = null
+    }
+
+    /**
+     * move if selector exists
+     * @param {MouseEvent} e
+     * @param {string} direction
+     * @private
+     */
+    moveSelector(e, direction)
+    {
+        this.selector.div.style.backgroundColor = 'transparent'
+        let index = this.children.indexOf(this.selector)
+        if (direction === 'down' || direction === 'up')
+        {
+            if (direction === 'down')
+            {
+                index++
+                index = (index === this.children.length) ? 0 : index
+            }
+            else
+            {
+                index--
+                index = (index < 0) ? this.children.length - 1 : index
+            }
+            this.selector = this.children[index]
+        }
+        else
+        {
+            if (direction === 'right')
+            {
+                if (this.selector.submenu)
+                {
+                    this.selector.handleClick(e)
+                    this.selector = null
+                }
+                else
+                {
+                    this.moveChild(direction)
+                }
+            }
+            else if (direction === 'left')
+            {
+                if (!this.selector.menu.menu.applicationMenu)
+                {
+                    this.selector.menu.attached.handleClick(e)
+                    this.selector.menu.menu.selector = this.selector.menu.attached
+                    this.selector = null
+                }
+                else
+                {
+                    this.moveChild(direction)
+                }
+            }
+            e.preventDefault()
+            return true
+        }
+    }
+
+    /**
+     * move the selector in the menu
+     * @param {KeyboardEvent} e
+     * @param {string} direction (left, right, up, down)
+     * @private
+     */
+    move(e, direction)
+    {
+        if (this.selector)
+        {
+            if (this.moveSelector(e, direction))
+            {
+                return
+            }
+        }
+        else
+        {
+            if (direction === 'up')
+            {
+                this.selector = this.children[this.children.length - 1]
+            }
+            else
+            {
+                this.selector = this.children[0]
+            }
+        }
+        this.selector.div.style.backgroundColor = Styles.SelectedBackground
+        e.preventDefault()
+        e.stopPropagation()
+    }
+
+    /**
+     * click the selector with keyboard
+     * @private
+     */
+    enter(e)
+    {
+        if (this.selector)
+        {
+            this.selector.handleClick(e)
+        }
+    }
+
+    /**
+     * array containing the menu's items
+     * @property {MenuItems[]} items
+     * @readonly
+     */
+    get items()
+    {
+        return this.children
+    }
+
+    /**
+     * gets active application Menu
+     * @return {Menu}
+     */
+    static getApplicationMenu()
+    {
+        return _application.menu
+    }
+
+    /**
+     * sets active application Menu (and removes any existing application menus)
+     * @param {Menu} menu
+     */
+    static setApplicationMenu(menu)
+    {
+        if (_application)
+        {
+            _application.remove()
+        }
+        _application = html({ parent: document.body, styles: Styles.ApplicationContainer })
+        _application.menu = menu
+        menu.applyStyles(Styles.ApplicationMenuStyle)
+        for (let child of menu.children)
+        {
+            child.applyStyles(Styles.ApplicationMenuRowStyle)
+            if (child.arrow)
+            {
+                child.arrow.style.display = 'none'
+            }
+            menu.div.appendChild(child.div)
+        }
+        menu.div.tabIndex = -1
+        _application.appendChild(menu.div)
+        menu.applicationMenu = true
+        menu.div.addEventListener('blur', () => menu.closeAll())
+        menu.showAccelerators()
+    }
+
+    /**
+     * GlobalAccelerator used by menu and provides a way to register keyboard accelerators throughout the application
+     * @typedef {Accelerator}
+     */
+    static get GlobalAccelarator()
+    {
+        if (!_accelerator)
+        {
+            _accelerator = new Accelerators({ div: document.body })
+        }
+        return _accelerator
+    }
+}
+
+Menu.MenuItem = MenuItem
+
+module.exports = Menu
+},{"./accelerators":183,"./html":184,"./menuItem":186,"./styles":187}],186:[function(require,module,exports){
+const clicked = require('clicked')
+const html = require('./html')
+const Styles = require('./styles')
+const Accelerators = require('./accelerators')
+
+class MenuItem
+{
+    /**
+     * @param {object} options
+     * @param {ClickCallback} [options.click] callback when MenuItem is clicked
+     * @param {string} [options.label] label for menu entry (may include accelerator by placing & before letter)
+     * @param {string} [options.type] separator, checkbox, or undefined
+     * @param {object} [options.styles] additional CSS styles to apply to this MenuItem
+     * @param {string} [options.accelerator] see Accelerator for inputs (e.g., ctrl+shift+A)
+     * @param {MenuItem} [options.submenu] attaches a submenu (and changes type to submenu)
+     * @param {boolean} [options.checked] check the checkbox
+     */
+    constructor(options)
+    {
+        options = options || {}
+        this.styles = options.styles
+        this.div = html()
+        this.type = options.type
+        this.click = options.click
+        if (this.type === 'separator')
+        {
+            this.applyStyles(Styles.Separator)
+        }
+        else
+        {
+            this.checked = options.checked
+            this.createChecked(options.checked)
+            this.text = options.label || '&nbsp;&nbsp;&nbsp;'
+            this.label = html({ parent: this.div })
+            this.createAccelerator(options.accelerator)
+            this.createSubmenu(options.submenu)
+            if (options.submenu)
+            {
+                this.submenu = options.submenu
+                this.submenu.applyStyles(Styles.MenuStyle)
+            }
+            this.applyStyles(Styles.RowStyle)
+            clicked(this.div, (e) => this.handleClick(e))
+            this.div.addEventListener('mouseenter', () => this.mouseenter())
+            this.div.addEventListener('mouseleave', () => this.mouseleave())
+        }
+    }
+
+    /**
+     * The click callback
+     * @callback MenuItem~ClickCallback
+     * @param {InputEvent} e
+     */
+
+    mouseenter()
+    {
+        if (!this.submenu || this.menu.showing !== this )
+        {
+            this.div.style.backgroundColor = Styles.SelectedBackground
+            if (this.submenu && !this.menu.applicationMenu)
+            {
+                this.submenuTimeout = setTimeout(() =>
+                {
+                    this.submenuTimeout = null
+                    this.submenu.show(this)
+                }, Styles.SubmenuOpenDelay)
+            }
+        }
+    }
+
+    mouseleave()
+    {
+        if (!this.submenu || this.menu.showing !== this)
+        {
+            if (this.submenuTimeout)
+            {
+                clearTimeout(this.submenuTimeout)
+                this.submenuTimeout = null
+            }
+            this.div.style.backgroundColor = 'transparent'
+        }
+    }
+
+    applyStyles(base)
+    {
+        const styles = {}
+        for (let style in base)
+        {
+            styles[style] = base[style]
+        }
+        if (this.styles)
+        {
+            for (let style in this.styles)
+            {
+                styles[style] = this.styles[style]
+            }
+        }
+        for (let style in styles)
+        {
+            this.div.style[style] = styles[style]
+        }
+    }
+
+    createChecked(checked)
+    {
+        this.check = html({ parent: this.div, html: checked ? '&#10004;' : '' })
+    }
+
+    showShortcut()
+    {
+        if (this.type !== 'separator')
+        {
+            this.label.innerHTML = ''
+            const text = this.text
+            let current = html({ parent: this.label, type: 'span' })
+            if (text.indexOf('&') !== -1)
+            {
+                let i = 0
+                do
+                {
+                    const letter = text[i]
+                    if (letter === '&')
+                    {
+                        i++
+                        html({ parent: this.label, type: 'span', html: text[i], styles: Styles.AcceleratorKey })
+                        current = html({ parent: this.label, type: 'span' })
+                    }
+                    else
+                    {
+                        current.innerHTML += letter
+                    }
+                    i++
+                }
+                while (i < text.length)
+            }
+            else
+            {
+                this.label.innerHTML = text
+            }
+            this.shortcutAvailable = true
+        }
+    }
+
+    hideShortcut()
+    {
+        if (this.type !== 'separator')
+        {
+            const text = this.text.replace('&', '')
+            this.label.innerHTML = text
+            this.shortcutAvailable = true
+        }
+    }
+
+    createAccelerator(accelerator)
+    {
+        this.accelerator = html({ parent: this.div, html: accelerator ? Accelerators.prettifyKey(accelerator) :  '', styles: Styles.Accelerator})
+    }
+
+    createSubmenu(submenu)
+    {
+        this.arrow = html({ parent: this.div, html: submenu ? '&#9658;' : '' })
+    }
+
+    closeAll()
+    {
+        let menu = this.menu
+        while (menu && !menu.applicationMenu)
+        {
+            if (menu.showing)
+            {
+                menu.showing.div.style.backgroundColor = 'transparent'
+                menu.showing = null
+            }
+            menu.div.remove()
+            menu = menu.menu
+        }
+        if (menu)
+        {
+            menu.showing.div.style.background = 'transparent'
+            menu.showing = null
+            menu.showAccelerators()
+        }
+    }
+
+    handleClick(e)
+    {
+        if (this.submenu)
+        {
+            if (this.submenuTimeout)
+            {
+                clearTimeout(this.submenuTimeout)
+                this.submenuTimeout = null
+            }
+            this.submenu.show(this)
+            this.div.style.backgroundColor = Styles.SelectedBackground
+        }
+        else if (this.type === 'checkbox')
+        {
+            this.checked = !this.checked
+            this.check.innerHTML = this.checked ? '&#10004;' : ''
+        }
+        else
+        {
+            this.closeAll()
+        }
+        if (this.click)
+        {
+            this.click(e, this)
+        }
+    }
+}
+
+module.exports = MenuItem
+},{"./accelerators":183,"./html":184,"./styles":187,"clicked":3}],187:[function(require,module,exports){
+const ApplicationContainer = {
+    'z-index': 999999,
+    'position': 'fixed',
+    'top': 0,
+    'left': 0,
+    'user-select': 'none',
+    'background': 'red',
+    'font-size': '0.85em'
+}
+
+const ApplicationMenuStyle = {
+    'display': 'flex',
+    'flex-direction': 'row',
+    'color': 'black',
+    'backgroundColor': 'rgb(230,230,230)',
+    'width': '100vw',
+    'border': 'none',
+    'box-shadow': 'unset',
+    'outline': 'none'
+}
+
+const MenuStyle = {
+    'flex-direction': 'column',
+    'position': 'fixed',
+    'user-select': 'none',
+    'color': 'black',
+    'z-index': 999999,
+    'backgroundColor': 'white',
+    'border': '1px solid rgba(0,0,0,0.5)',
+    'boxShadow': '1px 3px 3px rgba(0,0,0,0.25)'
+}
+
+const ApplicationMenuRowStyle = {
+    'padding': '0.25em 0.5em',
+    'margin': 0,
+    'line-height': '1em'
+}
+
+const RowStyle = {
+    'display': 'flex',
+    'padding': '0.25em 1.5em 0.25em',
+    'line-height': '1.5em'
+}
+
+const Accelerator = {
+    'opacity': 0.5
+}
+
+const Separator = {
+    'border-bottom': '1px solid rgba(0,0,0,0.1)',
+    'margin': '0.5em 0'
+}
+
+const AcceleratorKey = {
+    'text-decoration': 'underline',
+    'text-decoration-color': 'rgba(0,0,0,0.5)'
+}
+
+const MinimumColumnWidth = 20
+
+const SelectedBackground = 'rgba(0,0,0,0.1)'
+
+const Overlap = 5
+
+// time to wait for submenu to open when hovering
+const SubmenuOpenDelay = 500
+
+module.exports = {
+    ApplicationContainer,
+    ApplicationMenuStyle,
+    MenuStyle,
+    ApplicationMenuRowStyle,
+    RowStyle,
+    Accelerator,
+    AcceleratorKey,
+    Separator,
+    MinimumColumnWidth,
+    SelectedBackground,
+    Overlap,
+    SubmenuOpenDelay
+}
+},{}]},{},[1]);

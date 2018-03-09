@@ -3,7 +3,7 @@ const MenuItem = require('./menuItem')
 const Accelerators = require('./accelerators')
 const html = require('./html')
 
-let _accelerator
+let _accelerator, _application
 
 class Menu
 {
@@ -239,19 +239,9 @@ class Menu
         }
     }
 
-    getApplicationMenu()
-    {
-        let menu = this.menu
-        while (menu && !menu.applicationMenu)
-        {
-            menu = menu.menu
-        }
-        return menu
-    }
-
     getApplicationDiv()
     {
-        return this.getApplicationMenu().application
+        return _application
     }
 
     /**
@@ -386,9 +376,27 @@ class Menu
         return this.children
     }
 
+    /**
+     * gets active application Menu
+     * @return {Menu}
+     */
+    static getApplicationMenu()
+    {
+        return _application.menu
+    }
+
+    /**
+     * sets active application Menu (and removes any existing application menus)
+     * @param {Menu} menu
+     */
     static setApplicationMenu(menu)
     {
-        menu.application = html({ parent: document.body, styles: Styles.ApplicationContainer })
+        if (_application)
+        {
+            _application.remove()
+        }
+        _application = html({ parent: document.body, styles: Styles.ApplicationContainer })
+        _application.menu = menu
         menu.applyStyles(Styles.ApplicationMenuStyle)
         for (let child of menu.children)
         {
@@ -400,7 +408,7 @@ class Menu
             menu.div.appendChild(child.div)
         }
         menu.div.tabIndex = -1
-        menu.application.appendChild(menu.div)
+        _application.appendChild(menu.div)
         menu.applicationMenu = true
         menu.div.addEventListener('blur', () => menu.closeAll())
         menu.showAccelerators()

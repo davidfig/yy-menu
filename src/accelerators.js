@@ -1,3 +1,5 @@
+let Menu
+
 class Accelerators
 {
     /**
@@ -8,6 +10,7 @@ class Accelerators
      */
     constructor(options)
     {
+        Menu = require('./menu')
         this.menuKeys = {}
         this.keys = {}
         if (options.div)
@@ -48,7 +51,7 @@ class Accelerators
      */
     registerMenuSpecial(menu)
     {
-        this.menuKeys['escape'] = () => menu.getApplicationMenu().closeAll()
+        this.menuKeys['escape'] = () => Menu.getApplicationMenu().closeAll()
         this.menuKeys['enter'] = (e) => menu.enter(e)
         this.menuKeys['space'] = (e) => menu.enter(e)
         this.menuKeys['arrowright'] = (e) => menu.move(e, 'right')
