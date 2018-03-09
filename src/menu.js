@@ -37,7 +37,6 @@ class Menu
 
     hide()
     {
-        Menu.GlobalAccelarator.unregisterMenuShortcuts()
         let current = this.menu.showing
         while (current && current.submenu)
         {
@@ -51,16 +50,17 @@ class Menu
             }
             current = next
         }
-        this.menu.showing = null
-        this.div.remove()
-        this.menu.showAccelerators()
     }
 
     show(menuItem)
     {
+        Menu.GlobalAccelarator.unregisterMenuShortcuts()
         if (this.menu && this.menu.showing === menuItem)
         {
             this.hide()
+            this.menu.showing = null
+            this.div.remove()
+            this.menu.showAccelerators()
         }
         else
         {
@@ -68,23 +68,10 @@ class Menu
             {
                 if (this.menu.showing && this.menu.children.indexOf(menuItem) !== -1)
                 {
-                    let current = this.menu.showing
-                    current.div.style.backgroundColor = 'transparent'
-                    while (current && current.submenu)
-                    {
-                        current.submenu.div.remove()
-                        let next = current.submenu.showing
-                        if (next)
-                        {
-                            current.submenu.showing.div.style.backgroundColor = 'transparent'
-                            current.submenu.showing = false
-                        }
-                        current = next
-                    }
+                    this.hide()
                 }
                 this.menu.showing = menuItem
                 this.menu.hideAccelerators()
-                Menu.GlobalAccelarator.unregisterMenuShortcuts()
             }
             const div = menuItem.div
             const parent = this.menu.div
@@ -260,6 +247,62 @@ class Menu
     }
 
     /**
+     * move if selector exists
+     * @param {MouseEvent} e
+     * @param {string} direction
+     * @private
+     */
+    moveSelector(e, direction)
+    {
+        this.selector.div.style.backgroundColor = 'transparent'
+        let index = this.children.indexOf(this.selector)
+        if (direction === 'down' || direction === 'up')
+        {
+            if (direction === 'down')
+            {
+                index++
+                index = (index === this.children.length) ? 0 : index
+            }
+            else
+            {
+                index--
+                index = (index < 0) ? this.children.length - 1 : index
+            }
+            this.selector = this.children[index]
+        }
+        else
+        {
+            if (direction === 'right')
+            {
+                if (this.selector.submenu)
+                {
+                    this.selector.handleClick(e)
+                    this.selector = null
+                }
+                else
+                {
+                    this.moveChild(direction)
+                }
+            }
+            else if (direction === 'left')
+            {
+                if (!this.selector.menu.menu.applicationMenu)
+                {
+                    this.selector.menu.attached.handleClick(e)
+                    this.selector.menu.menu.selector = this.selector.menu.attached
+                    this.selector = null
+                }
+                else
+                {
+                    this.moveChild(direction)
+                }
+            }
+            e.preventDefault()
+            return true
+        }
+    }
+
+    /**
      * move the selector in the menu
      * @param {KeyboardEvent} e
      * @param {string} direction (left, right, up, down)
@@ -269,56 +312,9 @@ class Menu
     {
         if (this.selector)
         {
-            this.selector.div.style.backgroundColor = 'transparent'
-            let index = this.children.indexOf(this.selector)
-            if (direction === 'down' || direction === 'up')
+            if (this.moveSelector(e, direction))
             {
-                if (direction === 'down')
-                {
-                    index++
-                    index = (index === this.children.length) ? 0 : index
-                }
-                else
-                {
-                    index--
-                    index = (index < 0) ? this.children.length - 1 : index
-                }
-                this.selector = this.children[index]
-            }
-            else
-            {
-                if (direction === 'right')
-                {
-                    if (this.selector.submenu)
-                    {
-                        this.selector.handleClick(e)
-                        this.selector = null
-                        e.preventDefault()
-                        return
-                    }
-                    else
-                    {
-                        this.moveChild(direction)
-                        e.preventDefault()
-                        return
-                    }
-                }
-                else if (direction === 'left')
-                {
-                    if (!this.selector.menu.menu.applicationMenu)
-                    {
-                        this.selector.menu.hide()
-                        this.selector = null
-                        e.preventDefault()
-                        return
-                    }
-                    else
-                    {
-                        this.moveChild(direction)
-                        e.preventDefault()
-                        return
-                    }
-                }
+                return
             }
         }
         else
@@ -334,14 +330,19 @@ class Menu
         }
         this.selector.div.style.backgroundColor = Styles.SelectedBackground
         e.preventDefault()
+        e.stopPropagation()
     }
 
     /**
-     * enter the menuItem currently selected (via move)
+     * click the selector with keyboard
+     * @private
      */
-    enter()
+    enter(e)
     {
-
+        if (this.selector)
+        {
+            this.selector.handleClick(e)
+        }
     }
 
     static SetApplicationMenu(menu)

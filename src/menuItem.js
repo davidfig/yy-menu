@@ -185,6 +185,7 @@ class MenuItem
                 this.submenuTimeout = null
             }
             this.submenu.show(this)
+            this.div.style.backgroundColor = Styles.SelectedBackground
         }
         else if (this.type === 'checkbox')
         {
