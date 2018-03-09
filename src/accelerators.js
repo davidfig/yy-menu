@@ -50,6 +50,7 @@ class Accelerators
     {
         this.menuKeys['escape'] = () => menu.getApplicationMenu().closeAll()
         this.menuKeys['enter'] = (e) => menu.enter(e)
+        this.menuKeys['space'] = (e) => menu.enter(e)
         this.menuKeys['arrowright'] = (e) => menu.move(e, 'right')
         this.menuKeys['arrowleft'] = (e) => menu.move(e, 'left')
         this.menuKeys['arrowup'] = (e) => menu.move(e, 'up')
