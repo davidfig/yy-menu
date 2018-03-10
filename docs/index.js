@@ -44,7 +44,7 @@ function test()
 
     Menu.setApplicationMenu(menu)
 
-    Menu.GlobalAccelarator.register('a', () => console.log('hi'))
+    Menu.GlobalAccelerator.register('a', () => console.log('hi'))
 }
 
 window.onload = function ()
@@ -53,7 +53,7 @@ window.onload = function ()
     require('fork-me-github')('https://github.com/davidfig/menu')
     require('./highlight')()
 }
-},{"../src/menu":184,"./highlight":2,"fork-me-github":3}],2:[function(require,module,exports){
+},{"../src/menu":185,"./highlight":2,"fork-me-github":3}],2:[function(require,module,exports){
 // shows the code in the demo
 module.exports = function highlight()
 {
@@ -17262,7 +17262,89 @@ class Accelerators
 }
 
 module.exports = Accelerators
-},{"./menu":184}],183:[function(require,module,exports){
+},{"./menu":185}],183:[function(require,module,exports){
+const ApplicationContainerStyle = {
+    'z-index': 999999,
+    'position': 'fixed',
+    'top': 0,
+    'left': 0,
+    'user-select': 'none',
+    'font-size': '0.85em'
+}
+
+const ApplicationMenuStyle = {
+    'position': 'fixed',
+    'display': 'flex',
+    'flex-direction': 'row',
+    'color': 'black',
+    'backgroundColor': 'rgb(230,230,230)',
+    'width': '100vw',
+    'border': 'none',
+    'box-shadow': 'unset',
+    'outline': 'none'
+}
+
+const MenuStyle = {
+    'flex-direction': 'column',
+    'position': 'fixed',
+    'user-select': 'none',
+    'color': 'black',
+    'z-index': 999999,
+    'backgroundColor': 'white',
+    'border': '1px solid rgba(0,0,0,0.5)',
+    'boxShadow': '1px 3px 3px rgba(0,0,0,0.25)'
+}
+
+const ApplicationMenuRowStyle = {
+    'padding': '0.25em 0.5em',
+    'margin': 0,
+    'line-height': '1em'
+}
+
+const RowStyle = {
+    'display': 'flex',
+    'padding': '0.25em 1.5em 0.25em',
+    'line-height': '1.5em'
+}
+
+const AcceleratorStyle = {
+    'opacity': 0.5
+}
+
+const SeparatorStyle = {
+    'border-bottom': '1px solid rgba(0,0,0,0.1)',
+    'margin': '0.5em 0'
+}
+
+const AcceleratorKeyStyle = {
+    'text-decoration': 'underline',
+    'text-decoration-color': 'rgba(0,0,0,0.5)'
+}
+
+const MinimumColumnWidth = 20
+
+const SelectedBackgroundStyle = 'rgba(0,0,0,0.1)'
+
+const Overlap = 5
+
+// time to wait for submenu to open when hovering
+const SubmenuOpenDelay = 500
+
+module.exports = {
+    ApplicationContainerStyle,
+    ApplicationMenuStyle,
+    MenuStyle,
+    ApplicationMenuRowStyle,
+    RowStyle,
+    AcceleratorStyle,
+    AcceleratorKeyStyle,
+    SeparatorStyle,
+    MinimumColumnWidth,
+    SelectedBackgroundStyle,
+    Overlap,
+    SubmenuOpenDelay
+}
+},{}],184:[function(require,module,exports){
 module.exports = function (options)
 {
     options = options || {}
@@ -17284,8 +17366,8 @@ module.exports = function (options)
     }
     return object
 }
-},{}],184:[function(require,module,exports){
-const Styles =   require('./styles')
+},{}],185:[function(require,module,exports){
+const Config =   require('./config')
 const MenuItem = require('./menuItem')
 const Accelerators = require('./accelerators')
 const html = require('./html')
@@ -17305,7 +17387,8 @@ class Menu
         this.div = document.createElement('div')
         this.styles = options.styles
         this.children = []
-        this.applyStyles(Styles.MenuStyle)
+        this.applyConfig(Config.MenuStyle)
+        this.div.tabIndex = -1
     }
 
     /**
@@ -17399,8 +17482,8 @@ class Menu
             }
             else
             {
-                this.div.style.left = parent.offsetLeft + parent.offsetWidth - Styles.Overlap + 'px'
-                this.div.style.top = parent.offsetTop + div.offsetTop - Styles.Overlap + 'px'
+                this.div.style.left = parent.offsetLeft + parent.offsetWidth - Config.Overlap + 'px'
+                this.div.style.top = parent.offsetTop + div.offsetTop - Config.Overlap + 'px'
             }
             this.attached = menuItem
             this.showAccelerators()
@@ -17414,11 +17497,11 @@ class Menu
                 child.arrow.style.width = 'auto'
                 if (child.type === 'checkbox')
                 {
-                    checked = Styles.MinimumColumnWidth
+                    checked = Config.MinimumColumnWidth
                 }
                 if (child.submenu)
                 {
-                    arrow = Styles.MinimumColumnWidth
+                    arrow = Config.MinimumColumnWidth
                 }
             }
             for (let child of this.children)
@@ -17450,7 +17533,7 @@ class Menu
         }
     }
 
-    applyStyles(base)
+    applyConfig(base)
     {
         const styles = {}
         for (let style in base)
@@ -17532,82 +17615,77 @@ class Menu
     }
 
     /**
-     * move to the next child pane
+     * move selector to the next child pane
      * @param {string} direction (left or right)
      * @private
      */
     moveChild(direction)
     {
-        const parent = this.selector.menu.menu
-        let index = parent.children.indexOf(parent.showing)
+        let index
         if (direction === 'left')
         {
+            const parent = this.selector.menu.menu
+            index = parent.children.indexOf(parent.showing)
             index--
             index = (index < 0) ? parent.children.length - 1 : index
+            parent.children[index].handleClick()
         }
         else
         {
+            let parent = this.selector.menu.menu
+            let selector = parent.showing
+            while (!parent.applicationMenu)
+            {
+                selector = parent.showing
+                selector.handleClick()
+                selector.div.style.backgroundColor = 'transparent'
+                parent = parent.menu
+            }
+            index = parent.children.indexOf(selector)
             index++
             index = (index === parent.children.length) ? 0 : index
+            parent.children[index].handleClick()
         }
-        parent.children[index].handleClick({})
         this.selector = null
     }
 
     /**
-     * move if selector exists
+     * move selector right and left
      * @param {MouseEvent} e
      * @param {string} direction
      * @private
      */
-    moveSelector(e, direction)
+    horizontalSelector(e, direction)
     {
-        this.selector.div.style.backgroundColor = 'transparent'
-        let index = this.children.indexOf(this.selector)
-        if (direction === 'down' || direction === 'up')
+        if (direction === 'right')
         {
-            if (direction === 'down')
+            if (this.selector.submenu)
             {
-                index++
-                index = (index === this.children.length) ? 0 : index
+                this.selector.handleClick(e)
+                this.selector.submenu.selector = this.selector.submenu.children[0]
+                this.selector.submenu.selector.div.style.backgroundColor = Config.SelectedBackgroundStyle
+                this.selector = null
             }
             else
             {
-                index--
-                index = (index < 0) ? this.children.length - 1 : index
+                this.moveChild(direction)
             }
-            this.selector = this.children[index]
         }
-        else
+        else if (direction === 'left')
         {
-            if (direction === 'right')
+            if (!this.selector.menu.menu.applicationMenu)
             {
-                if (this.selector.submenu)
-                {
-                    this.selector.handleClick(e)
-                    this.selector = null
-                }
-                else
-                {
-                    this.moveChild(direction)
-                }
+                this.selector.menu.attached.handleClick(e)
+                this.selector.menu.menu.selector = this.selector.menu.attached
+                this.selector = null
             }
-            else if (direction === 'left')
+            else
             {
-                if (!this.selector.menu.menu.applicationMenu)
-                {
-                    this.selector.menu.attached.handleClick(e)
-                    this.selector.menu.menu.selector = this.selector.menu.attached
-                    this.selector = null
-                }
-                else
-                {
-                    this.moveChild(direction)
-                }
+                this.moveChild(direction)
             }
-            e.preventDefault()
-            return true
         }
+        e.stopPropagation()
+        e.preventDefault()
     }
 
     /**
@@ -17620,10 +17698,23 @@ class Menu
     {
         if (this.selector)
         {
-            if (this.moveSelector(e, direction))
+            this.selector.div.style.backgroundColor = 'transparent'
+            let index = this.children.indexOf(this.selector)
+            if (direction === 'down')
             {
-                return
+                index++
+                index = (index === this.children.length) ? 0 : index
             }
+            else if (direction === 'up')
+            {
+                index--
+                index = (index < 0) ? this.children.length - 1 : index
+            }
+            else
+            {
+                return this.horizontalSelector(e, direction)
+            }
+            this.selector = this.children[index]
         }
         else
         {
@@ -17636,7 +17727,7 @@ class Menu
                 this.selector = this.children[0]
             }
         }
-        this.selector.div.style.backgroundColor = Styles.SelectedBackground
+        this.selector.div.style.backgroundColor = Config.SelectedBackgroundStyle
         e.preventDefault()
         e.stopPropagation()
     }
@@ -17682,22 +17773,40 @@ class Menu
         {
             _application.remove()
         }
-        _application = html({ parent: document.body, styles: Styles.ApplicationContainer })
+        _application = html({ parent: document.body, styles: Config.ApplicationContainerStyle })
         _application.menu = menu
-        menu.applyStyles(Styles.ApplicationMenuStyle)
+        menu.applyConfig(Config.ApplicationMenuStyle)
         for (let child of menu.children)
         {
-            child.applyStyles(Styles.ApplicationMenuRowStyle)
+            child.applyConfig(Config.ApplicationMenuRowStyle)
             if (child.arrow)
             {
                 child.arrow.style.display = 'none'
             }
             menu.div.appendChild(child.div)
         }
-        menu.div.tabIndex = -1
+
         _application.appendChild(menu.div)
         menu.applicationMenu = true
-        menu.div.addEventListener('blur', () => menu.closeAll())
+        menu.div.tabIndex = -1
+
+        // don't let menu bar focus unless windows are open (this fixes a focus bug)
+        menu.div.addEventListener('focus', () =>
+        {
+            if (!menu.showing)
+            {
+                menu.div.blur()
+            }
+        })
+
+        // close all windows if menu is no longer the focus
+        menu.div.addEventListener('blur', () =>
+        {
+            if (menu.showing)
+            {
+                menu.closeAll()
+            }
+        })
         menu.showAccelerators()
     }
 
@@ -17718,9 +17827,9 @@ class Menu
 Menu.MenuItem = MenuItem
 
 module.exports = Menu
-},{"./accelerators":182,"./html":183,"./menuItem":185,"./styles":186}],185:[function(require,module,exports){
+},{"./accelerators":182,"./config":183,"./html":184,"./menuItem":186}],186:[function(require,module,exports){
 const html = require('./html')
-const Styles = require('./styles')
+const Config = require('./config')
 const Accelerators = require('./accelerators')
 
 class MenuItem
@@ -17743,22 +17852,22 @@ class MenuItem
         this.click = options.click
         if (this.type === 'separator')
         {
-            this.applyStyles(Styles.Separator)
+            this.applyConfig(Config.SeparatorStyle)
         }
         else
         {
             this.checked = options.checked
             this.createChecked(options.checked)
             this.text = options.label || '&nbsp;&nbsp;&nbsp;'
-            this.label = html({ parent: this.div })
+            this.createShortcut()
             this.createAccelerator(options.accelerator)
             this.createSubmenu(options.submenu)
             if (options.submenu)
             {
                 this.submenu = options.submenu
-                this.submenu.applyStyles(Styles.MenuStyle)
+                this.submenu.applyConfig(Config.MenuStyle)
             }
-            this.applyStyles(Styles.RowStyle)
+            this.applyConfig(Config.RowStyle)
             this.div.addEventListener('mousedown', (e) => this.handleClick(e))
             this.div.addEventListener('touchstart', (e) => this.handleClick(e))
             this.div.addEventListener('mouseenter', () => this.mouseenter())
@@ -17776,14 +17885,14 @@ class MenuItem
     {
         if (!this.submenu || this.menu.showing !== this )
         {
-            this.div.style.backgroundColor = Styles.SelectedBackground
+            this.div.style.backgroundColor = Config.SelectedBackgroundStyle
             if (this.submenu && !this.menu.applicationMenu)
             {
                 this.submenuTimeout = setTimeout(() =>
                 {
                     this.submenuTimeout = null
                     this.submenu.show(this)
-                }, Styles.SubmenuOpenDelay)
+                }, Config.SubmenuOpenDelay)
             }
         }
     }
@@ -17801,7 +17910,7 @@ class MenuItem
         }
     }
 
-    applyStyles(base)
+    applyConfig(base)
     {
         const styles = {}
         for (let style in base)
@@ -17826,12 +17935,12 @@ class MenuItem
         this.check = html({ parent: this.div, html: checked ? '&#10004;' : '' })
     }
 
-    showShortcut()
+    createShortcut()
     {
         if (this.type !== 'separator')
         {
-            this.label.innerHTML = ''
             const text = this.text
+            this.label = html({ parent: this.div })
             let current = html({ parent: this.label, type: 'span' })
             if (text.indexOf('&') !== -1)
             {
@@ -17842,7 +17951,7 @@ class MenuItem
                     if (letter === '&')
                     {
                         i++
-                        html({ parent: this.label, type: 'span', html: text[i], styles: Styles.AcceleratorKey })
+                        this.shortcutSpan = html({ parent: this.label, type: 'span', html: text[i], styles: Config.AcceleratorKeyStyle })
                         current = html({ parent: this.label, type: 'span' })
                     }
                     else
@@ -17857,23 +17966,28 @@ class MenuItem
             {
                 this.label.innerHTML = text
             }
-            this.shortcutAvailable = true
+        }
+    }
+
+    showShortcut()
+    {
+        if (this.shortcutSpan)
+        {
+            this.shortcutSpan.style.textDecoration = 'underline'
         }
     }
 
     hideShortcut()
     {
-        if (this.type !== 'separator')
+        if (this.shortcutSpan)
         {
-            const text = this.text.replace('&', '')
-            this.label.innerHTML = text
-            this.shortcutAvailable = true
+            this.shortcutSpan.style.textDecoration = 'none'
         }
     }
 
     createAccelerator(accelerator)
     {
-        this.accelerator = html({ parent: this.div, html: accelerator ? Accelerators.prettifyKey(accelerator) :  '', styles: Styles.Accelerator})
+        this.accelerator = html({ parent: this.div, html: accelerator ? Accelerators.prettifyKey(accelerator) :  '', styles: Config.AcceleratorStyle })
     }
 
     createSubmenu(submenu)
@@ -17906,13 +18020,21 @@ class MenuItem
     {
         if (this.submenu)
         {
+            // let menu = this.menu
+            // while (!menu.applicationMenu)
+            // {
+            //     menu = menu.menu
+            // }
+            // menu.skip = true
+            // menu.div.focus()
+            // menu.skip = false
             if (this.submenuTimeout)
             {
                 clearTimeout(this.submenuTimeout)
                 this.submenuTimeout = null
             }
             this.submenu.show(this)
-            this.div.style.backgroundColor = Styles.SelectedBackground
+            this.div.style.backgroundColor = Config.SelectedBackgroundStyle
         }
         else if (this.type === 'checkbox')
         {
@@ -17923,6 +18045,7 @@ class MenuItem
         {
             this.closeAll()
         }
+
         if (this.click)
         {
             this.click(e, this)
@@ -17931,86 +18054,4 @@ class MenuItem
 }
 
 module.exports = MenuItem
-},{"./accelerators":182,"./html":183,"./styles":186}],186:[function(require,module,exports){
-const ApplicationContainer = {
-    'z-index': 999999,
-    'position': 'fixed',
-    'top': 0,
-    'left': 0,
-    'user-select': 'none',
-    'background': 'red',
-    'font-size': '0.85em'
-}
-
-const ApplicationMenuStyle = {
-    'display': 'flex',
-    'flex-direction': 'row',
-    'color': 'black',
-    'backgroundColor': 'rgb(230,230,230)',
-    'width': '100vw',
-    'border': 'none',
-    'box-shadow': 'unset',
-    'outline': 'none'
-}
-
-const MenuStyle = {
-    'flex-direction': 'column',
-    'position': 'fixed',
-    'user-select': 'none',
-    'color': 'black',
-    'z-index': 999999,
-    'backgroundColor': 'white',
-    'border': '1px solid rgba(0,0,0,0.5)',
-    'boxShadow': '1px 3px 3px rgba(0,0,0,0.25)'
-}
-
-const ApplicationMenuRowStyle = {
-    'padding': '0.25em 0.5em',
-    'margin': 0,
-    'line-height': '1em'
-}
-
-const RowStyle = {
-    'display': 'flex',
-    'padding': '0.25em 1.5em 0.25em',
-    'line-height': '1.5em'
-}
-
-const Accelerator = {
-    'opacity': 0.5
-}
-
-const Separator = {
-    'border-bottom': '1px solid rgba(0,0,0,0.1)',
-    'margin': '0.5em 0'
-}
-
-const AcceleratorKey = {
-    'text-decoration': 'underline',
-    'text-decoration-color': 'rgba(0,0,0,0.5)'
-}
-
-const MinimumColumnWidth = 20
-
-const SelectedBackground = 'rgba(0,0,0,0.1)'
-
-const Overlap = 5
-
-// time to wait for submenu to open when hovering
-const SubmenuOpenDelay = 500
-
-module.exports = {
-    ApplicationContainer,
-    ApplicationMenuStyle,
-    MenuStyle,
-    ApplicationMenuRowStyle,
-    RowStyle,
-    Accelerator,
-    AcceleratorKey,
-    Separator,
-    MinimumColumnWidth,
-    SelectedBackground,
-    Overlap,
-    SubmenuOpenDelay
-}
-},{}]},{},[1]);
+},{"./accelerators":182,"./config":183,"./html":184}]},{},[1]);
