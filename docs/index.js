@@ -18075,7 +18075,7 @@ class MenuItem
         this.accelerator = html({ parent: this.div, html: accelerator ? GlobalAccelerator.prettifyKey(accelerator) : '', styles: Config.AcceleratorStyle })
         if (accelerator)
         {
-            GlobalAccelerator.register(accelerator, () => this.handleClick())
+            GlobalAccelerator.register(accelerator, (e) => this.click(e))
         }
     }
 
