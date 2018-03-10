@@ -85,7 +85,7 @@ class Menu
 
     show(menuItem)
     {
-        // Menu.GlobalAccelerator.unregisterMenuShortcuts()
+        Menu.GlobalAccelerator.unregisterMenuShortcuts()
         if (this.menu && this.menu.showing === menuItem)
         {
             this.hide()
@@ -246,82 +246,77 @@ class Menu
     }
 
     /**
-     * move to the next child pane
+     * move selector to the next child pane
      * @param {string} direction (left or right)
      * @private
      */
     moveChild(direction)
     {
-        const parent = this.selector.menu.menu
-        let index = parent.children.indexOf(parent.showing)
+        let index
         if (direction === 'left')
         {
+            const parent = this.selector.menu.menu
+            index = parent.children.indexOf(parent.showing)
             index--
             index = (index < 0) ? parent.children.length - 1 : index
+            parent.children[index].handleClick()
         }
         else
         {
+            let parent = this.selector.menu.menu
+            let selector = parent.showing
+            while (!parent.applicationMenu)
+            {
+                selector = parent.showing
+                selector.handleClick()
+                selector.div.style.backgroundColor = 'transparent'
+                parent = parent.menu
+            }
+            index = parent.children.indexOf(selector)
             index++
             index = (index === parent.children.length) ? 0 : index
+            parent.children[index].handleClick()
         }
-        parent.children[index].handleClick({})
         this.selector = null
     }
 
     /**
-     * move if selector exists
+     * move selector right and left
      * @param {MouseEvent} e
      * @param {string} direction
      * @private
      */
-    moveSelector(e, direction)
+    horizontalSelector(e, direction)
     {
-        this.selector.div.style.backgroundColor = 'transparent'
-        let index = this.children.indexOf(this.selector)
-        if (direction === 'down' || direction === 'up')
+        if (direction === 'right')
         {
-            if (direction === 'down')
+            if (this.selector.submenu)
             {
-                index++
-                index = (index === this.children.length) ? 0 : index
+                this.selector.handleClick(e)
+                this.selector.submenu.selector = this.selector.submenu.children[0]
+                this.selector.submenu.selector.div.style.backgroundColor = Config.SelectedBackgroundStyle
+                this.selector = null
             }
             else
             {
-                index--
-                index = (index < 0) ? this.children.length - 1 : index
+                this.moveChild(direction)
             }
-            this.selector = this.children[index]
         }
-        else
+        else if (direction === 'left')
         {
-            if (direction === 'right')
+            if (!this.selector.menu.menu.applicationMenu)
             {
-                if (this.selector.submenu)
-                {
-                    this.selector.handleClick(e)
-                    this.selector = null
-                }
-                else
-                {
-                    this.moveChild(direction)
-                }
+                this.selector.menu.attached.handleClick(e)
+                this.selector.menu.menu.selector = this.selector.menu.attached
+                this.selector = null
             }
-            else if (direction === 'left')
+            else
             {
-                if (!this.selector.menu.menu.applicationMenu)
-                {
-                    this.selector.menu.attached.handleClick(e)
-                    this.selector.menu.menu.selector = this.selector.menu.attached
-                    this.selector = null
-                }
-                else
-                {
-                    this.moveChild(direction)
-                }
+                this.moveChild(direction)
             }
-            e.preventDefault()
-            return true
         }
+        e.stopPropagation()
+        e.preventDefault()
     }
 
     /**
@@ -334,10 +329,23 @@ class Menu
     {
         if (this.selector)
         {
-            if (this.moveSelector(e, direction))
+            this.selector.div.style.backgroundColor = 'transparent'
+            let index = this.children.indexOf(this.selector)
+            if (direction === 'down')
             {
-                return
+                index++
+                index = (index === this.children.length) ? 0 : index
             }
+            else if (direction === 'up')
+            {
+                index--
+                index = (index < 0) ? this.children.length - 1 : index
+            }
+            else
+            {
+                return this.horizontalSelector(e, direction)
+            }
+            this.selector = this.children[index]
         }
         else
         {
