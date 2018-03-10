@@ -160,7 +160,7 @@
 </div>
     <div class="main">
         
-        <h1 class="page-title" data-filename="Viewport">Source: menuItem.js</h1>
+        <h1 class="page-title" data-filename="Viewport">Source: globalAccelerator.js</h1>
         
         
 
@@ -169,234 +169,218 @@
     <section>
         <header>
             <div class="header content-size">
-                <h2>menuItem.js</h2>
+                <h2>globalAccelerator.js</h2>
             </div>
         </header>
         <article>
-            <pre id="source-code" class="prettyprint source "><code>const html = require('./html')
-const Config = require('./config')
-const GlobalAccelerator = require('./globalAccelerator')
+            <pre id="source-code" class="prettyprint source "><code>/**
+ * Handles all keyboard input for the menu and user-registered keys
+ */
+const GlobalAccelerator = {
 
-class MenuItem
-{
-    /**
-     * @param {object} options
-     * @param {string} [options.label] label for menu entry may include accelerator by placing &amp; before letter)
-     * @param {string} [options.type] separator, checkbox, or undefined
-     * @param {object} [options.styles] additional CSS styles to apply to this MenuItem
-     * @param {string} [options.accelerator] see Accelerator for inputs (e.g., ctrl+shift+A)
-     * @param {MenuItem} [options.submenu] attaches a submenu (and changes type to submenu)
-     * @param {boolean} [options.checked] check the checkbox
-     */
-    constructor(options)
+    init: function()
     {
-        GlobalAccelerator.init()
-        options = options || {}
-        this.styles = options.styles
-        this.div = html()
-        this.type = options.type
-        this.click = options.click
-        if (this.type === 'separator')
+        if (!GlobalAccelerator.menuKeys)
         {
-            this.applyConfig(Config.SeparatorStyle)
+            GlobalAccelerator.menuKeys = {}
+            GlobalAccelerator.keys = {}
+            document.body.addEventListener('keydown', (e) => GlobalAccelerator.keyDown(this, e))
+        }
+    },
+
+    /**
+     * clear all user-registered keys
+     */
+    clearKeys: function()
+    {
+        GlobalAccelerator.keys = {}
+    },
+
+    /**
+     * Register a shortcut key for use by an open menu
+     * @param {KeyCodes} letter
+     * @param {MenuItem} menuItem
+     * @param {boolean} applicationMenu
+     * @private
+     */
+    registerMenuShortcut: function(letter, menuItem)
+    {
+        if (letter)
+        {
+            const keyCode = (menuItem.menu.applicationMenu ? 'alt+' : '') + letter
+            GlobalAccelerator.menuKeys[GlobalAccelerator.prepareKey(keyCode)] = (e) =>
+            {
+                menuItem.handleClick(e)
+                e.stopPropagation()
+                e.preventDefault()
+            }
+        }
+    },
+
+    /**
+     * Register special shortcut keys for menu
+     * @param {MenuItem} menuItem
+     * @private
+     */
+    registerMenuSpecial: function(menu)
+    {
+        GlobalAccelerator.menuKeys['escape'] = () => menu.closeAll()
+        GlobalAccelerator.menuKeys['enter'] = (e) => menu.enter(e)
+        GlobalAccelerator.menuKeys['space'] = (e) => menu.enter(e)
+        GlobalAccelerator.menuKeys['arrowright'] = (e) => menu.move(e, 'right')
+        GlobalAccelerator.menuKeys['arrowleft'] = (e) => menu.move(e, 'left')
+        GlobalAccelerator.menuKeys['arrowup'] = (e) => menu.move(e, 'up')
+        GlobalAccelerator.menuKeys['arrowdown'] = (e) => menu.move(e, 'down')
+    },
+
+    /**
+     * Removes menu shortcuts
+     * @private
+     */
+    unregisterMenuShortcuts: function()
+    {
+        GlobalAccelerator.menuKeys = {}
+    },
+
+    /**
+     * Keycodes definition. In the form of modifier[+modifier...]+key
+     * &lt;p>For example: ctrl+shift+e&lt;/p>
+     * &lt;p>KeyCodes are case insensitive (i.e., shift+a is the same as Shift+A)&lt;/p>
+     * &lt;pre>
+     * Modifiers:
+     *    ctrl, alt, shift, meta, (ctrl aliases: command, control, commandorcontrol)
+     * &lt;/pre>
+     * &lt;pre>
+     * Keys:
+     *    escape, 0-9, minus, equal, backspace, tab, a-z, backetleft, bracketright, semicolon, quote,
+     *    backquote, backslash, comma, period, slash, numpadmultiply, space, capslock, f1-f24, pause,
+     *    scrolllock, printscreen, home, arrowup, arrowleft, arrowright, arrowdown, pageup, pagedown,
+     *    end, insert, delete, enter, shiftleft, shiftright, ctrlleft, ctrlright, altleft, altright, shiftleft,
+     *    shiftright, numlock, numpad...
+     * &lt;/pre>
+     * For OS-specific codes and a more detailed explanation see {@link https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/code}. Also note that 'Digit' and 'Key' are removed from the code to make it easier to type.
+     *
+     * @typedef {string} GlobalAccelerator~KeyCodes
+     */
+
+    /**
+     * translate a user-provided keycode
+     * @param {KeyCodes} keyCode
+     * @return {KeyCodes} formatted and sorted keyCode
+     * @private
+     */
+    prepareKey: function(keyCode)
+    {
+        let modifiers = []
+        let key = ''
+        keyCode = keyCode.toLowerCase()
+        if (keyCode.indexOf('+') !== -1)
+        {
+            const split = keyCode.toLowerCase().split('+')
+            for (let i = 0; i &lt; split.length - 1; i++)
+            {
+                let modifier = split[i]
+                modifier = modifier.replace('commandorcontrol', 'ctrl')
+                modifier = modifier.replace('command', 'ctrl')
+                modifier = modifier.replace('control', 'ctrl')
+                modifiers.push(modifier)
+            }
+            modifiers = modifiers.sort((a, b) => { return a[0] > b[0] ? 1 : a[0] &lt; b[0] ? -1 : 0 })
+            for (let part of modifiers)
+            {
+                key += part + '+'
+            }
+            key += split[split.length - 1]
         }
         else
         {
-            this.checked = options.checked
-            this.createChecked(options.checked)
-            this.text = options.label || '&amp;nbsp;&amp;nbsp;&amp;nbsp;'
-            this.createShortcut()
-            this.createAccelerator(options.accelerator)
-            this.createSubmenu(options.submenu)
-            if (options.submenu)
-            {
-                this.submenu = options.submenu
-                this.submenu.applyConfig(Config.MenuStyle)
-            }
-            this.applyConfig(Config.RowStyle)
-            this.div.addEventListener('mousedown', (e) => this.handleClick(e))
-            this.div.addEventListener('touchstart', (e) => this.handleClick(e))
-            this.div.addEventListener('mouseenter', () => this.mouseenter())
-            this.div.addEventListener('mouseleave', () => this.mouseleave())
+            key = keyCode
         }
-    }
+        return key
+    },
 
     /**
-     * The click callback
-     * @callback MenuItem~ClickCallback
-     * @param {InputEvent} e
+     * Make the KeyCode pretty for printing on the menu
+     * @param {KeyCode} keyCode
+     * @return {string}
+     * @private
      */
-
-    mouseenter()
+    prettifyKey: function(keyCode)
     {
-        if (!this.submenu || this.menu.showing !== this )
+        keyCode = GlobalAccelerator.prepareKey(keyCode)
+        let key = ''
+        if (keyCode.indexOf('+') !== -1)
         {
-            this.div.style.backgroundColor = Config.SelectedBackgroundStyle
-            if (this.submenu &amp;&amp; !this.menu.applicationMenu)
+            const split = keyCode.toLowerCase().split('+')
+            for (let i = 0; i &lt; split.length - 1; i++)
             {
-                this.submenuTimeout = setTimeout(() =>
-                {
-                    this.submenuTimeout = null
-                    this.submenu.show(this)
-                }, Config.SubmenuOpenDelay)
+                let modifier = split[i]
+                key += modifier[0].toUpperCase() + modifier.substr(1) + '+'
             }
-        }
-    }
-
-    mouseleave()
-    {
-        if (!this.submenu || this.menu.showing !== this)
-        {
-            if (this.submenuTimeout)
-            {
-                clearTimeout(this.submenuTimeout)
-                this.submenuTimeout = null
-            }
-            this.div.style.backgroundColor = 'transparent'
-        }
-    }
-
-    applyConfig(base)
-    {
-        const styles = {}
-        for (let style in base)
-        {
-            styles[style] = base[style]
-        }
-        if (this.styles)
-        {
-            for (let style in this.styles)
-            {
-                styles[style] = this.styles[style]
-            }
-        }
-        for (let style in styles)
-        {
-            this.div.style[style] = styles[style]
-        }
-    }
-
-    createChecked(checked)
-    {
-        this.check = html({ parent: this.div, html: checked ? '&amp;#10004;' : '' })
-    }
-
-    createShortcut()
-    {
-        if (this.type !== 'separator')
-        {
-            const text = this.text
-            this.label = html({ parent: this.div })
-            let current = html({ parent: this.label, type: 'span' })
-            if (text.indexOf('&amp;') !== -1)
-            {
-                let i = 0
-                do
-                {
-                    const letter = text[i]
-                    if (letter === '&amp;')
-                    {
-                        i++
-                        this.shortcutSpan = html({ parent: this.label, type: 'span', html: text[i], styles: Config.AcceleratorKeyStyle })
-                        current = html({ parent: this.label, type: 'span' })
-                    }
-                    else
-                    {
-                        current.innerHTML += letter
-                    }
-                    i++
-                }
-                while (i &lt; text.length)
-            }
-            else
-            {
-                this.label.innerHTML = text
-            }
-        }
-    }
-
-    showShortcut()
-    {
-        if (this.shortcutSpan)
-        {
-            this.shortcutSpan.style.textDecoration = 'underline'
-        }
-    }
-
-    hideShortcut()
-    {
-        if (this.shortcutSpan)
-        {
-            this.shortcutSpan.style.textDecoration = 'none'
-        }
-    }
-
-    createAccelerator(accelerator)
-    {
-        this.accelerator = html({ parent: this.div, html: accelerator ? GlobalAccelerator.prettifyKey(accelerator) : '', styles: Config.AcceleratorStyle })
-        if (accelerator)
-        {
-            GlobalAccelerator.register(accelerator, () => this.handleClick())
-        }
-    }
-
-    createSubmenu(submenu)
-    {
-        this.arrow = html({ parent: this.div, html: submenu ? '&amp;#9658;' : '' })
-    }
-
-    closeAll()
-    {
-        let menu = this.menu
-        while (menu &amp;&amp; !menu.applicationMenu)
-        {
-            if (menu.showing)
-            {
-                menu.showing.div.style.backgroundColor = 'transparent'
-                menu.showing = null
-            }
-            menu.div.remove()
-            menu = menu.menu
-        }
-        if (menu.showing)
-        {
-            menu.showing.div.style.background = 'transparent'
-            menu.showing = null
-            menu.showAccelerators()
-        }
-    }
-
-    handleClick(e)
-    {
-        if (this.submenu)
-        {
-            if (this.submenuTimeout)
-            {
-                clearTimeout(this.submenuTimeout)
-                this.submenuTimeout = null
-            }
-            this.submenu.show(this)
-            this.div.style.backgroundColor = Config.SelectedBackgroundStyle
-        }
-        else if (this.type === 'checkbox')
-        {
-            this.checked = !this.checked
-            this.check.innerHTML = this.checked ? '&amp;#10004;' : ''
-            this.closeAll()
+            key += split[split.length - 1].toUpperCase()
         }
         else
         {
-            this.closeAll()
+            key = keyCode.toUpperCase()
         }
+        return key
+    },
 
-        if (this.click)
+    /**
+     * register a key as a global accelerator
+     * @param {KeyCodes} keyCode (e.g., Ctrl+shift+E)
+     * @param {function} callback
+     */
+    register: function(keyCode, callback)
+    {
+        GlobalAccelerator.keys[GlobalAccelerator.prepareKey(keyCode)] = (e) =>
         {
-            this.click(e, this)
+            callback(e)
+            e.preventDefault()
+            e.stopPropagation()
+        }
+    },
+
+    keyDown: function(accelerator, e)
+    {
+        const modifiers = []
+        if (e.altKey)
+        {
+            modifiers.push('alt')
+        }
+        if (e.ctrlKey)
+        {
+            modifiers.push('ctrl')
+        }
+        if (e.metaKey)
+        {
+            modifiers.push('meta')
+        }
+        if (e.shiftKey)
+        {
+            modifiers.push('shift')
+        }
+        let keyCode = ''
+        for (let modifier of modifiers)
+        {
+            keyCode = modifier + '+'
+        }
+        let translate = e.code.toLowerCase()
+        translate = translate.replace('digit', '')
+        translate = translate.replace('key', '')
+        keyCode += translate
+        if (GlobalAccelerator.menuKeys[keyCode])
+        {
+            GlobalAccelerator.menuKeys[keyCode](e, this)
+        }
+        else if (GlobalAccelerator.keys[keyCode])
+        {
+            GlobalAccelerator.keys[keyCode](e, this)
         }
     }
 }
 
-module.exports = MenuItem</code></pre>
+module.exports = GlobalAccelerator</code></pre>
         </article>
     </section>
 

@@ -1,9 +1,9 @@
 const Config =   require('./config')
 const MenuItem = require('./menuItem')
-const Accelerators = require('./accelerators')
+const GlobalAccelerator = require('./globalAccelerator')
 const html = require('./html')
 
-let _accelerator, _application
+let _application
 
 class Menu
 {
@@ -214,9 +214,10 @@ class Menu
 
     closeAll()
     {
-        if (this.showing)
+        let application = _application.menu
+        if (application.showing)
         {
-            let menu = this
+            let menu = application
             while (menu.showing)
             {
                 menu = menu.showing.submenu
@@ -388,20 +389,12 @@ class Menu
     }
 
     /**
-     * gets active application Menu
-     * @return {Menu}
-     */
-    static getApplicationMenu()
-    {
-        return _application.menu
-    }
-
-    /**
      * sets active application Menu (and removes any existing application menus)
      * @param {Menu} menu
      */
     static setApplicationMenu(menu)
     {
+        GlobalAccelerator.init()
         if (_application)
         {
             _application.remove()
@@ -444,16 +437,12 @@ class Menu
     }
 
     /**
-     * GlobalAccelerator used by menu and provides a way to register keyboard accelerators throughout the application
-     * @typedef {Accelerator}
+     * GlobalAccelerator definition
+     * @type {Accelerator}
      */
     static get GlobalAccelerator()
     {
-        if (!_accelerator)
-        {
-            _accelerator = new Accelerators({ div: document.body })
-        }
-        return _accelerator
+        return GlobalAccelerator
     }
 
     /**

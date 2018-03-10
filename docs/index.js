@@ -10,9 +10,9 @@ function test()
     const menu = new Menu()
 
     const file = new Menu()
-    file.append(new MenuItem({ label: '&New...', accelerator: 'Control+N', click: () => console.log('new dialog open') }))
+    file.append(new MenuItem({ label: '&New...', accelerator: 'CommandOrControl+N', click: () => console.log('new dialog open') }))
     file.append(new MenuItem({ label: '&Save...', accelerator: 'CommandOrControl+S' }))
-    file.insert(1, new MenuItem({ label: '&Open...', accelerator: 'CommandOrControl+O' }))
+    file.insert(1, new MenuItem({ label: '&Open...', accelerator: 'CommandOrControl+O', click: () => console.log('open pressed') }))
     file.append(new MenuItem({ type: 'separator' }))
     file.append(new MenuItem({ label: '&Autosave', type: 'checkbox', checked: true }))
     file.append(new MenuItem({ type: 'separator' }))
@@ -17060,220 +17060,6 @@ module.exports = function(hljs) {
   };
 };
 },{}],182:[function(require,module,exports){
-let Menu
-
-class Accelerators
-{
-    /**
-     * Handles all keyboard input for the menu and user-registered keys registered through Menu.GlobalAccelerator
-     * @param {object} options
-     * @param {HTMLElement} [options.div] used for global accelerators (usually attached to document.body)
-     * @param {Menu} [options.menu] Menu to attach accelerators
-     */
-    constructor(options)
-    {
-        Menu = require('./menu')
-        this.menuKeys = {}
-        this.keys = {}
-        if (options.div)
-        {
-            options.div.addEventListener('keydown', (e) => this.keyDown(this, e))
-        }
-        else
-        {
-            options.menu.div.addEventListener('keydown', (e) => this.keyDown(this, e))
-        }
-    }
-
-    /**
-     * clear all user-registered keys
-     */
-    clearKeys()
-    {
-        this.keys = {}
-    }
-
-    /**
-     * Register a shortcut key for use by an open menu
-     * @param {KeyCodes} letter
-     * @param {MenuItem} menuItem
-     * @param {boolean} applicationMenu
-     * @private
-     */
-    registerMenuShortcut(letter, menuItem)
-    {
-        if (letter)
-        {
-            const keyCode = (menuItem.menu.applicationMenu ? 'alt+' : '') + letter
-            this.menuKeys[Accelerators.prepareKey(keyCode)] = (e) =>
-            {
-                menuItem.handleClick(e)
-                e.stopPropagation()
-                e.preventDefault()
-            }
-        }
-    }
-
-    /**
-     * Register special shortcut keys for menu
-     * @param {MenuItem} menuItem
-     * @private
-     */
-    registerMenuSpecial(menu)
-    {
-        this.menuKeys['escape'] = () => Menu.getApplicationMenu().closeAll()
-        this.menuKeys['enter'] = (e) => menu.enter(e)
-        this.menuKeys['space'] = (e) => menu.enter(e)
-        this.menuKeys['arrowright'] = (e) => menu.move(e, 'right')
-        this.menuKeys['arrowleft'] = (e) => menu.move(e, 'left')
-        this.menuKeys['arrowup'] = (e) => menu.move(e, 'up')
-        this.menuKeys['arrowdown'] = (e) => menu.move(e, 'down')
-    }
-
-    /**
-     * Removes menu shortcuts
-     * @private
-     */
-    unregisterMenuShortcuts()
-    {
-        this.menuKeys = {}
-    }
-
-    /**
-     * Keycodes definition. In the form of modifier[+modifier...]+key
-     * <p>For example: ctrl+shift+e</p>
-     * <p>KeyCodes are case insensitive (i.e., shift+a is the same as Shift+A)</p>
-     * <pre>
-     * Modifiers:
-     *    ctrl, alt, shift, meta, (ctrl aliases: command, control, commandorcontrol)
-     * </pre>
-     * <pre>
-     * Keys:
-     *    escape, 0-9, minus, equal, backspace, tab, a-z, backetleft, bracketright, semicolon, quote,
-     *    backquote, backslash, comma, period, slash, numpadmultiply, space, capslock, f1-f24, pause,
-     *    scrolllock, printscreen, home, arrowup, arrowleft, arrowright, arrowdown, pageup, pagedown,
-     *    end, insert, delete, enter, shiftleft, shiftright, ctrlleft, ctrlright, altleft, altright, shiftleft,
-     *    shiftright, numlock, numpad...
-     * </pre>
-     * For OS-specific codes and a more detailed explanation see {@link https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/code}. Also note that 'Digit' and 'Key' are removed from the code to make it easier to type.
-     *
-     * @typedef {string} Accelerators~KeyCodes
-     */
-
-    /**
-     * translate a user-provided keycode
-     * @param {KeyCodes} keyCode
-     * @return {KeyCodes} formatted and sorted keyCode
-     * @private
-     */
-    static prepareKey(keyCode)
-    {
-        let modifiers = []
-        let key = ''
-        keyCode = keyCode.toLowerCase()
-        if (keyCode.indexOf('+') !== -1)
-        {
-            const split = keyCode.toLowerCase().split('+')
-            for (let i = 0; i < split.length - 1; i++)
-            {
-                let modifier = split[i]
-                modifier = modifier.replace('commandorcontrol', 'ctrl')
-                modifier = modifier.replace('command', 'ctrl')
-                modifier = modifier.replace('control', 'ctrl')
-                modifiers.push(modifier)
-            }
-            modifiers = modifiers.sort((a, b) => { return a[0] > b[0] ? 1 : a[0] < b[0] ? -1 : 0 })
-            for (let part of modifiers)
-            {
-                key += part + '+'
-            }
-            key += split[split.length - 1]
-        }
-        else
-        {
-            key = keyCode
-        }
-        return key
-    }
-
-    /**
-     * Make the KeyCode pretty for printing on the menu
-     * @param {KeyCode} keyCode
-     * @return {string}
-     * @private
-     */
-    static prettifyKey(keyCode)
-    {
-        keyCode = Accelerators.prepareKey(keyCode)
-        let key = ''
-        if (keyCode.indexOf('+') !== -1)
-        {
-            const split = keyCode.toLowerCase().split('+')
-            for (let i = 0; i < split.length - 1; i++)
-            {
-                let modifier = split[i]
-                key += modifier[0].toUpperCase() + modifier.substr(1) + '+'
-            }
-            key += split[split.length - 1].toUpperCase()
-        }
-        else
-        {
-            key = keyCode.toUpperCase()
-        }
-        return key
-    }
-
-    /**
-     * register a key as a global accelerator
-     * @param {KeyCodes} keyCode (e.g., Ctrl+shift+E)
-     * @param {function} callback
-     */
-    register(keyCode, callback)
-    {
-        this.keys[Accelerators.prepareKey(keyCode)] = callback
-    }
-
-    keyDown(accelerator, e)
-    {
-        const modifiers = []
-        if (e.altKey)
-        {
-            modifiers.push('alt')
-        }
-        if (e.ctrlKey)
-        {
-            modifiers.push('ctrl')
-        }
-        if (e.metaKey)
-        {
-            modifiers.push('meta')
-        }
-        if (e.shiftKey)
-        {
-            modifiers.push('shift')
-        }
-        let keyCode = ''
-        for (let modifier of modifiers)
-        {
-            keyCode = modifier + '+'
-        }
-        let translate = e.code.toLowerCase()
-        translate = translate.replace('digit', '')
-        translate = translate.replace('key', '')
-        keyCode += translate
-        if (this.menuKeys[keyCode])
-        {
-            this.menuKeys[keyCode](e, this)
-        }
-        else if (this.keys[keyCode])
-        {
-            this.keys[keyCode](e, this)
-        }
-    }
-}
-
-module.exports = Accelerators
-},{"./menu":185}],183:[function(require,module,exports){
 const Config = {
 
     /**
@@ -17394,6 +17180,215 @@ const Config = {
 }
 
 module.exports = Config
+},{}],183:[function(require,module,exports){
+/**
+ * Handles all keyboard input for the menu and user-registered keys
+ */
+const GlobalAccelerator = {
+
+    init: function()
+    {
+        if (!GlobalAccelerator.menuKeys)
+        {
+            GlobalAccelerator.menuKeys = {}
+            GlobalAccelerator.keys = {}
+            document.body.addEventListener('keydown', (e) => GlobalAccelerator.keyDown(this, e))
+        }
+    },
+
+    /**
+     * clear all user-registered keys
+     */
+    clearKeys: function()
+    {
+        GlobalAccelerator.keys = {}
+    },
+
+    /**
+     * Register a shortcut key for use by an open menu
+     * @param {KeyCodes} letter
+     * @param {MenuItem} menuItem
+     * @param {boolean} applicationMenu
+     * @private
+     */
+    registerMenuShortcut: function(letter, menuItem)
+    {
+        if (letter)
+        {
+            const keyCode = (menuItem.menu.applicationMenu ? 'alt+' : '') + letter
+            GlobalAccelerator.menuKeys[GlobalAccelerator.prepareKey(keyCode)] = (e) =>
+            {
+                menuItem.handleClick(e)
+                e.stopPropagation()
+                e.preventDefault()
+            }
+        }
+    },
+
+    /**
+     * Register special shortcut keys for menu
+     * @param {MenuItem} menuItem
+     * @private
+     */
+    registerMenuSpecial: function(menu)
+    {
+        GlobalAccelerator.menuKeys['escape'] = () => menu.closeAll()
+        GlobalAccelerator.menuKeys['enter'] = (e) => menu.enter(e)
+        GlobalAccelerator.menuKeys['space'] = (e) => menu.enter(e)
+        GlobalAccelerator.menuKeys['arrowright'] = (e) => menu.move(e, 'right')
+        GlobalAccelerator.menuKeys['arrowleft'] = (e) => menu.move(e, 'left')
+        GlobalAccelerator.menuKeys['arrowup'] = (e) => menu.move(e, 'up')
+        GlobalAccelerator.menuKeys['arrowdown'] = (e) => menu.move(e, 'down')
+    },
+
+    /**
+     * Removes menu shortcuts
+     * @private
+     */
+    unregisterMenuShortcuts: function()
+    {
+        GlobalAccelerator.menuKeys = {}
+    },
+
+    /**
+     * Keycodes definition. In the form of modifier[+modifier...]+key
+     * <p>For example: ctrl+shift+e</p>
+     * <p>KeyCodes are case insensitive (i.e., shift+a is the same as Shift+A)</p>
+     * <pre>
+     * Modifiers:
+     *    ctrl, alt, shift, meta, (ctrl aliases: command, control, commandorcontrol)
+     * </pre>
+     * <pre>
+     * Keys:
+     *    escape, 0-9, minus, equal, backspace, tab, a-z, backetleft, bracketright, semicolon, quote,
+     *    backquote, backslash, comma, period, slash, numpadmultiply, space, capslock, f1-f24, pause,
+     *    scrolllock, printscreen, home, arrowup, arrowleft, arrowright, arrowdown, pageup, pagedown,
+     *    end, insert, delete, enter, shiftleft, shiftright, ctrlleft, ctrlright, altleft, altright, shiftleft,
+     *    shiftright, numlock, numpad...
+     * </pre>
+     * For OS-specific codes and a more detailed explanation see {@link https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/code}. Also note that 'Digit' and 'Key' are removed from the code to make it easier to type.
+     *
+     * @typedef {string} GlobalAccelerator~KeyCodes
+     */
+
+    /**
+     * translate a user-provided keycode
+     * @param {KeyCodes} keyCode
+     * @return {KeyCodes} formatted and sorted keyCode
+     * @private
+     */
+    prepareKey: function(keyCode)
+    {
+        let modifiers = []
+        let key = ''
+        keyCode = keyCode.toLowerCase()
+        if (keyCode.indexOf('+') !== -1)
+        {
+            const split = keyCode.toLowerCase().split('+')
+            for (let i = 0; i < split.length - 1; i++)
+            {
+                let modifier = split[i]
+                modifier = modifier.replace('commandorcontrol', 'ctrl')
+                modifier = modifier.replace('command', 'ctrl')
+                modifier = modifier.replace('control', 'ctrl')
+                modifiers.push(modifier)
+            }
+            modifiers = modifiers.sort((a, b) => { return a[0] > b[0] ? 1 : a[0] < b[0] ? -1 : 0 })
+            for (let part of modifiers)
+            {
+                key += part + '+'
+            }
+            key += split[split.length - 1]
+        }
+        else
+        {
+            key = keyCode
+        }
+        return key
+    },
+
+    /**
+     * Make the KeyCode pretty for printing on the menu
+     * @param {KeyCode} keyCode
+     * @return {string}
+     * @private
+     */
+    prettifyKey: function(keyCode)
+    {
+        keyCode = GlobalAccelerator.prepareKey(keyCode)
+        let key = ''
+        if (keyCode.indexOf('+') !== -1)
+        {
+            const split = keyCode.toLowerCase().split('+')
+            for (let i = 0; i < split.length - 1; i++)
+            {
+                let modifier = split[i]
+                key += modifier[0].toUpperCase() + modifier.substr(1) + '+'
+            }
+            key += split[split.length - 1].toUpperCase()
+        }
+        else
+        {
+            key = keyCode.toUpperCase()
+        }
+        return key
+    },
+
+    /**
+     * register a key as a global accelerator
+     * @param {KeyCodes} keyCode (e.g., Ctrl+shift+E)
+     * @param {function} callback
+     */
+    register: function(keyCode, callback)
+    {
+        GlobalAccelerator.keys[GlobalAccelerator.prepareKey(keyCode)] = (e) =>
+        {
+            callback(e)
+            e.preventDefault()
+            e.stopPropagation()
+        }
+    },
+
+    keyDown: function(accelerator, e)
+    {
+        const modifiers = []
+        if (e.altKey)
+        {
+            modifiers.push('alt')
+        }
+        if (e.ctrlKey)
+        {
+            modifiers.push('ctrl')
+        }
+        if (e.metaKey)
+        {
+            modifiers.push('meta')
+        }
+        if (e.shiftKey)
+        {
+            modifiers.push('shift')
+        }
+        let keyCode = ''
+        for (let modifier of modifiers)
+        {
+            keyCode = modifier + '+'
+        }
+        let translate = e.code.toLowerCase()
+        translate = translate.replace('digit', '')
+        translate = translate.replace('key', '')
+        keyCode += translate
+        if (GlobalAccelerator.menuKeys[keyCode])
+        {
+            GlobalAccelerator.menuKeys[keyCode](e, this)
+        }
+        else if (GlobalAccelerator.keys[keyCode])
+        {
+            GlobalAccelerator.keys[keyCode](e, this)
+        }
+    }
+}
+
+module.exports = GlobalAccelerator
 },{}],184:[function(require,module,exports){
 module.exports = function (options)
 {
@@ -17419,10 +17414,10 @@ module.exports = function (options)
 },{}],185:[function(require,module,exports){
 const Config =   require('./config')
 const MenuItem = require('./menuItem')
-const Accelerators = require('./accelerators')
+const GlobalAccelerator = require('./globalAccelerator')
 const html = require('./html')
 
-let _accelerator, _application
+let _application
 
 class Menu
 {
@@ -17633,9 +17628,10 @@ class Menu
 
     closeAll()
     {
-        if (this.showing)
+        let application = _application.menu
+        if (application.showing)
         {
-            let menu = this
+            let menu = application
             while (menu.showing)
             {
                 menu = menu.showing.submenu
@@ -17807,20 +17803,12 @@ class Menu
     }
 
     /**
-     * gets active application Menu
-     * @return {Menu}
-     */
-    static getApplicationMenu()
-    {
-        return _application.menu
-    }
-
-    /**
      * sets active application Menu (and removes any existing application menus)
      * @param {Menu} menu
      */
     static setApplicationMenu(menu)
     {
+        GlobalAccelerator.init()
         if (_application)
         {
             _application.remove()
@@ -17863,16 +17851,12 @@ class Menu
     }
 
     /**
-     * GlobalAccelerator used by menu and provides a way to register keyboard accelerators throughout the application
-     * @typedef {Accelerator}
+     * GlobalAccelerator definition
+     * @type {Accelerator}
      */
     static get GlobalAccelerator()
     {
-        if (!_accelerator)
-        {
-            _accelerator = new Accelerators({ div: document.body })
-        }
-        return _accelerator
+        return GlobalAccelerator
     }
 
     /**
@@ -17895,10 +17879,10 @@ class Menu
 }
 
 module.exports = Menu
-},{"./accelerators":182,"./config":183,"./html":184,"./menuItem":186}],186:[function(require,module,exports){
+},{"./config":182,"./globalAccelerator":183,"./html":184,"./menuItem":186}],186:[function(require,module,exports){
 const html = require('./html')
 const Config = require('./config')
-const Accelerators = require('./accelerators')
+const GlobalAccelerator = require('./globalAccelerator')
 
 class MenuItem
 {
@@ -17913,6 +17897,7 @@ class MenuItem
      */
     constructor(options)
     {
+        GlobalAccelerator.init()
         options = options || {}
         this.styles = options.styles
         this.div = html()
@@ -18055,7 +18040,11 @@ class MenuItem
 
     createAccelerator(accelerator)
     {
-        this.accelerator = html({ parent: this.div, html: accelerator ? Accelerators.prettifyKey(accelerator) :  '', styles: Config.AcceleratorStyle })
+        this.accelerator = html({ parent: this.div, html: accelerator ? GlobalAccelerator.prettifyKey(accelerator) : '', styles: Config.AcceleratorStyle })
+        if (accelerator)
+        {
+            GlobalAccelerator.register(accelerator, () => this.handleClick())
+        }
     }
 
     createSubmenu(submenu)
@@ -18076,7 +18065,7 @@ class MenuItem
             menu.div.remove()
             menu = menu.menu
         }
-        if (menu)
+        if (menu.showing)
         {
             menu.showing.div.style.background = 'transparent'
             menu.showing = null
@@ -18115,4 +18104,4 @@ class MenuItem
 }
 
 module.exports = MenuItem
-},{"./accelerators":182,"./config":183,"./html":184}]},{},[1]);
+},{"./config":182,"./globalAccelerator":183,"./html":184}]},{},[1]);

@@ -1,35 +1,25 @@
-let Menu
+/**
+ * Handles all keyboard input for the menu and user-registered keys
+ */
+const GlobalAccelerator = {
 
-class Accelerators
-{
-    /**
-     * Handles all keyboard input for the menu and user-registered keys registered through Menu.GlobalAccelerator
-     * @param {object} options
-     * @param {HTMLElement} [options.div] used for global accelerators (usually attached to document.body)
-     * @param {Menu} [options.menu] Menu to attach accelerators
-     */
-    constructor(options)
+    init: function()
     {
-        Menu = require('./menu')
-        this.menuKeys = {}
-        this.keys = {}
-        if (options.div)
+        if (!GlobalAccelerator.menuKeys)
         {
-            options.div.addEventListener('keydown', (e) => this.keyDown(this, e))
+            GlobalAccelerator.menuKeys = {}
+            GlobalAccelerator.keys = {}
+            document.body.addEventListener('keydown', (e) => GlobalAccelerator.keyDown(this, e))
         }
-        else
-        {
-            options.menu.div.addEventListener('keydown', (e) => this.keyDown(this, e))
-        }
-    }
+    },
 
     /**
      * clear all user-registered keys
      */
-    clearKeys()
+    clearKeys: function()
     {
-        this.keys = {}
-    }
+        GlobalAccelerator.keys = {}
+    },
 
     /**
      * Register a shortcut key for use by an open menu
@@ -38,44 +28,44 @@ class Accelerators
      * @param {boolean} applicationMenu
      * @private
      */
-    registerMenuShortcut(letter, menuItem)
+    registerMenuShortcut: function(letter, menuItem)
     {
         if (letter)
         {
             const keyCode = (menuItem.menu.applicationMenu ? 'alt+' : '') + letter
-            this.menuKeys[Accelerators.prepareKey(keyCode)] = (e) =>
+            GlobalAccelerator.menuKeys[GlobalAccelerator.prepareKey(keyCode)] = (e) =>
             {
                 menuItem.handleClick(e)
                 e.stopPropagation()
                 e.preventDefault()
             }
         }
-    }
+    },
 
     /**
      * Register special shortcut keys for menu
      * @param {MenuItem} menuItem
      * @private
      */
-    registerMenuSpecial(menu)
+    registerMenuSpecial: function(menu)
     {
-        this.menuKeys['escape'] = () => Menu.getApplicationMenu().closeAll()
-        this.menuKeys['enter'] = (e) => menu.enter(e)
-        this.menuKeys['space'] = (e) => menu.enter(e)
-        this.menuKeys['arrowright'] = (e) => menu.move(e, 'right')
-        this.menuKeys['arrowleft'] = (e) => menu.move(e, 'left')
-        this.menuKeys['arrowup'] = (e) => menu.move(e, 'up')
-        this.menuKeys['arrowdown'] = (e) => menu.move(e, 'down')
-    }
+        GlobalAccelerator.menuKeys['escape'] = () => menu.closeAll()
+        GlobalAccelerator.menuKeys['enter'] = (e) => menu.enter(e)
+        GlobalAccelerator.menuKeys['space'] = (e) => menu.enter(e)
+        GlobalAccelerator.menuKeys['arrowright'] = (e) => menu.move(e, 'right')
+        GlobalAccelerator.menuKeys['arrowleft'] = (e) => menu.move(e, 'left')
+        GlobalAccelerator.menuKeys['arrowup'] = (e) => menu.move(e, 'up')
+        GlobalAccelerator.menuKeys['arrowdown'] = (e) => menu.move(e, 'down')
+    },
 
     /**
      * Removes menu shortcuts
      * @private
      */
-    unregisterMenuShortcuts()
+    unregisterMenuShortcuts: function()
     {
-        this.menuKeys = {}
-    }
+        GlobalAccelerator.menuKeys = {}
+    },
 
     /**
      * Keycodes definition. In the form of modifier[+modifier...]+key
@@ -95,7 +85,7 @@ class Accelerators
      * </pre>
      * For OS-specific codes and a more detailed explanation see {@link https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/code}. Also note that 'Digit' and 'Key' are removed from the code to make it easier to type.
      *
-     * @typedef {string} Accelerators~KeyCodes
+     * @typedef {string} GlobalAccelerator~KeyCodes
      */
 
     /**
@@ -104,7 +94,7 @@ class Accelerators
      * @return {KeyCodes} formatted and sorted keyCode
      * @private
      */
-    static prepareKey(keyCode)
+    prepareKey: function(keyCode)
     {
         let modifiers = []
         let key = ''
@@ -132,7 +122,7 @@ class Accelerators
             key = keyCode
         }
         return key
-    }
+    },
 
     /**
      * Make the KeyCode pretty for printing on the menu
@@ -140,9 +130,9 @@ class Accelerators
      * @return {string}
      * @private
      */
-    static prettifyKey(keyCode)
+    prettifyKey: function(keyCode)
     {
-        keyCode = Accelerators.prepareKey(keyCode)
+        keyCode = GlobalAccelerator.prepareKey(keyCode)
         let key = ''
         if (keyCode.indexOf('+') !== -1)
         {
@@ -159,19 +149,24 @@ class Accelerators
             key = keyCode.toUpperCase()
         }
         return key
-    }
+    },
 
     /**
      * register a key as a global accelerator
      * @param {KeyCodes} keyCode (e.g., Ctrl+shift+E)
      * @param {function} callback
      */
-    register(keyCode, callback)
+    register: function(keyCode, callback)
     {
-        this.keys[Accelerators.prepareKey(keyCode)] = callback
-    }
+        GlobalAccelerator.keys[GlobalAccelerator.prepareKey(keyCode)] = (e) =>
+        {
+            callback(e)
+            e.preventDefault()
+            e.stopPropagation()
+        }
+    },
 
-    keyDown(accelerator, e)
+    keyDown: function(accelerator, e)
     {
         const modifiers = []
         if (e.altKey)
@@ -199,15 +194,15 @@ class Accelerators
         translate = translate.replace('digit', '')
         translate = translate.replace('key', '')
         keyCode += translate
-        if (this.menuKeys[keyCode])
+        if (GlobalAccelerator.menuKeys[keyCode])
         {
-            this.menuKeys[keyCode](e, this)
+            GlobalAccelerator.menuKeys[keyCode](e, this)
         }
-        else if (this.keys[keyCode])
+        else if (GlobalAccelerator.keys[keyCode])
         {
-            this.keys[keyCode](e, this)
+            GlobalAccelerator.keys[keyCode](e, this)
         }
     }
 }
 
-module.exports = Accelerators
+module.exports = GlobalAccelerator

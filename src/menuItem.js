@@ -1,6 +1,6 @@
 const html = require('./html')
 const Config = require('./config')
-const Accelerators = require('./accelerators')
+const GlobalAccelerator = require('./globalAccelerator')
 
 class MenuItem
 {
@@ -15,6 +15,7 @@ class MenuItem
      */
     constructor(options)
     {
+        GlobalAccelerator.init()
         options = options || {}
         this.styles = options.styles
         this.div = html()
@@ -157,7 +158,11 @@ class MenuItem
 
     createAccelerator(accelerator)
     {
-        this.accelerator = html({ parent: this.div, html: accelerator ? Accelerators.prettifyKey(accelerator) :  '', styles: Config.AcceleratorStyle })
+        this.accelerator = html({ parent: this.div, html: accelerator ? GlobalAccelerator.prettifyKey(accelerator) : '', styles: Config.AcceleratorStyle })
+        if (accelerator)
+        {
+            GlobalAccelerator.register(accelerator, () => this.handleClick())
+        }
     }
 
     createSubmenu(submenu)
@@ -178,7 +183,7 @@ class MenuItem
             menu.div.remove()
             menu = menu.menu
         }
-        if (menu)
+        if (menu.showing)
         {
             menu.showing.div.style.background = 'transparent'
             menu.showing = null
