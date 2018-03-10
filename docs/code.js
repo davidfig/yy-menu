@@ -44,6 +44,10 @@ function test()
     view.append(new MenuItem({ label: 'submenu &2', submenu: submenu2 }))
     menu.append(new MenuItem({ label: '&View', submenu: view }))
 
+    const help = new Menu()
+    help.append(new MenuItem({ label: 'About' }))
+    menu.append(new MenuItem({ label: '&Help', submenu: help }))
+
     Menu.setApplicationMenu(menu)
 
     Menu.GlobalAccelerator.register('a', () => console.log('hi'))

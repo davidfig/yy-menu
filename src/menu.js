@@ -268,10 +268,10 @@ class Menu
             let selector = parent.showing
             while (!parent.applicationMenu)
             {
-                selector = parent.showing
                 selector.handleClick()
                 selector.div.style.backgroundColor = 'transparent'
                 parent = parent.menu
+                selector = parent.showing
             }
             index = parent.children.indexOf(selector)
             index++
