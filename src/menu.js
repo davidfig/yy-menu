@@ -214,6 +214,7 @@ class Menu
 
     closeAll()
     {
+        Menu.GlobalAccelerator.unregisterMenuShortcuts()
         let application = _application.menu
         if (application.showing)
         {

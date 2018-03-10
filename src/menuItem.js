@@ -173,6 +173,7 @@ class MenuItem
     closeAll()
     {
         let menu = this.menu
+        GlobalAccelerator.unregisterMenuShortcuts()
         while (menu && !menu.applicationMenu)
         {
             if (menu.showing)

@@ -45,6 +45,10 @@ function test()
     view.append(new MenuItem({ label: 'submenu &2', submenu: submenu2 }))
     menu.append(new MenuItem({ label: '&View', submenu: view }))
 
+    const help = new Menu()
+    help.append(new MenuItem({ label: 'About' }))
+    menu.append(new MenuItem({ label: '&Help', submenu: help }))
+
     Menu.setApplicationMenu(menu)
 
     Menu.GlobalAccelerator.register('a', () => console.log('hi'))
@@ -17655,6 +17659,7 @@ class Menu
 
     closeAll()
     {
+        Menu.GlobalAccelerator.unregisterMenuShortcuts()
         let application = _application.menu
         if (application.showing)
         {
@@ -17709,10 +17714,10 @@ class Menu
             let selector = parent.showing
             while (!parent.applicationMenu)
             {
-                selector = parent.showing
                 selector.handleClick()
                 selector.div.style.backgroundColor = 'transparent'
                 parent = parent.menu
+                selector = parent.showing
             }
             index = parent.children.indexOf(selector)
             index++
@@ -18082,6 +18087,7 @@ class MenuItem
     closeAll()
     {
         let menu = this.menu
+        GlobalAccelerator.unregisterMenuShortcuts()
         while (menu && !menu.applicationMenu)
         {
             if (menu.showing)
