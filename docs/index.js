@@ -17301,7 +17301,7 @@ const GlobalAccelerator = {
             code = code.toLowerCase().replace(' ', '')
             if (code.indexOf('+') !== -1)
             {
-                const split = code.toLowerCase().split('+')
+                const split = code.split('+')
                 for (let i = 0; i < split.length - 1; i++)
                 {
                     let modifier = split[i]
@@ -17319,7 +17319,7 @@ const GlobalAccelerator = {
             }
             else
             {
-                key = keyCode
+                key = code
             }
             keys.push(key)
         }
