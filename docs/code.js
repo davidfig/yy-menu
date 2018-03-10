@@ -3,6 +3,9 @@ const MenuItem = Menu.MenuItem
 
 function test()
 {
+    // change a Menu setting
+    Menu.Config.SubmenuOpenDelay = 300
+
     const menu = new Menu()
 
     const file = new Menu()

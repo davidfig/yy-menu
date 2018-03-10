@@ -164,7 +164,7 @@
 </div>
     <div class="main">
         
-        <h1 class="page-title" data-filename="Viewport">Source: menuItem.js</h1>
+        <h1 class="page-title" data-filename="Viewport">Source: config.js</h1>
         
         
 
@@ -173,236 +173,130 @@
     <section>
         <header>
             <div class="header content-size">
-                <h2>menuItem.js</h2>
+                <h2>config.js</h2>
             </div>
         </header>
         <article>
-            <pre id="source-code" class="prettyprint source "><code>const html = require('./html')
-const Config = require('./config')
-const Accelerators = require('./accelerators')
-
-class MenuItem
-{
-    /**
-     * @param {object} options
-     * @param {string} [options.label] label for menu entry may include accelerator by placing &amp; before letter)
-     * @param {string} [options.type] separator, checkbox, or undefined
-     * @param {object} [options.styles] additional CSS styles to apply to this MenuItem
-     * @param {string} [options.accelerator] see Accelerator for inputs (e.g., ctrl+shift+A)
-     * @param {MenuItem} [options.submenu] attaches a submenu (and changes type to submenu)
-     * @param {boolean} [options.checked] check the checkbox
-     */
-    constructor(options)
-    {
-        options = options || {}
-        this.styles = options.styles
-        this.div = html()
-        this.type = options.type
-        this.click = options.click
-        if (this.type === 'separator')
-        {
-            this.applyConfig(Config.SeparatorStyle)
-        }
-        else
-        {
-            this.checked = options.checked
-            this.createChecked(options.checked)
-            this.text = options.label || '&amp;nbsp;&amp;nbsp;&amp;nbsp;'
-            this.createShortcut()
-            this.createAccelerator(options.accelerator)
-            this.createSubmenu(options.submenu)
-            if (options.submenu)
-            {
-                this.submenu = options.submenu
-                this.submenu.applyConfig(Config.MenuStyle)
-            }
-            this.applyConfig(Config.RowStyle)
-            this.div.addEventListener('mousedown', (e) => this.handleClick(e))
-            this.div.addEventListener('touchstart', (e) => this.handleClick(e))
-            this.div.addEventListener('mouseenter', () => this.mouseenter())
-            this.div.addEventListener('mouseleave', () => this.mouseleave())
-        }
-    }
+            <pre id="source-code" class="prettyprint source "><code>const Config = {
 
     /**
-     * The click callback
-     * @callback MenuItem~ClickCallback
-     * @param {InputEvent} e
+     * application menu container styles
+     * @type {object}
      */
+    ApplicationContainerStyle: {
+        'z-index': 999999,
+        'position': 'fixed',
+        'top': 0,
+        'left': 0,
+        'user-select': 'none',
+        'font-size': '0.85em'
+    },
 
-    mouseenter()
-    {
-        if (!this.submenu || this.menu.showing !== this )
-        {
-            this.div.style.backgroundColor = Config.SelectedBackgroundStyle
-            if (this.submenu &amp;&amp; !this.menu.applicationMenu)
-            {
-                this.submenuTimeout = setTimeout(() =>
-                {
-                    this.submenuTimeout = null
-                    this.submenu.show(this)
-                }, Config.SubmenuOpenDelay)
-            }
-        }
-    }
+    /**
+     * application menu-bar styles
+     * @type {object}
+     */
+    ApplicationMenuStyle: {
+        'position': 'fixed',
+        'display': 'flex',
+        'flex-direction': 'row',
+        'color': 'black',
+        'backgroundColor': 'rgb(230,230,230)',
+        'width': '100vw',
+        'border': 'none',
+        'box-shadow': 'unset',
+        'outline': 'none'
+    },
 
-    mouseleave()
-    {
-        if (!this.submenu || this.menu.showing !== this)
-        {
-            if (this.submenuTimeout)
-            {
-                clearTimeout(this.submenuTimeout)
-                this.submenuTimeout = null
-            }
-            this.div.style.backgroundColor = 'transparent'
-        }
-    }
+    /**
+     * application menu entry styles
+     * @type {object}
+     */
+    ApplicationMenuRowStyle: {
+        'padding': '0.25em 0.5em',
+        'margin': 0,
+        'line-height': '1em'
+    },
 
-    applyConfig(base)
-    {
-        const styles = {}
-        for (let style in base)
-        {
-            styles[style] = base[style]
-        }
-        if (this.styles)
-        {
-            for (let style in this.styles)
-            {
-                styles[style] = this.styles[style]
-            }
-        }
-        for (let style in styles)
-        {
-            this.div.style[style] = styles[style]
-        }
-    }
+    /**
+     * lower-level menu window styles
+     * @type {object}
+     */
+    MenuStyle: {
+        'flex-direction': 'column',
+        'position': 'fixed',
+        'user-select': 'none',
+        'color': 'black',
+        'z-index': 999999,
+        'backgroundColor': 'white',
+        'border': '1px solid rgba(0,0,0,0.5)',
+        'boxShadow': '1px 3px 3px rgba(0,0,0,0.25)'
+    },
 
-    createChecked(checked)
-    {
-        this.check = html({ parent: this.div, html: checked ? '&amp;#10004;' : '' })
-    }
+    /**
+     * lower-level menu row styles
+     * @type {object}
+     */
+    RowStyle: {
+        'display': 'flex',
+        'padding': '0.25em 1.5em 0.25em',
+        'line-height': '1.5em'
+    },
 
-    createShortcut()
-    {
-        if (this.type !== 'separator')
-        {
-            const text = this.text
-            this.label = html({ parent: this.div })
-            let current = html({ parent: this.label, type: 'span' })
-            if (text.indexOf('&amp;') !== -1)
-            {
-                let i = 0
-                do
-                {
-                    const letter = text[i]
-                    if (letter === '&amp;')
-                    {
-                        i++
-                        this.shortcutSpan = html({ parent: this.label, type: 'span', html: text[i], styles: Config.AcceleratorKeyStyle })
-                        current = html({ parent: this.label, type: 'span' })
-                    }
-                    else
-                    {
-                        current.innerHTML += letter
-                    }
-                    i++
-                }
-                while (i &lt; text.length)
-            }
-            else
-            {
-                this.label.innerHTML = text
-            }
-        }
-    }
+    /**
+     * lower-level menu accelerator styles
+     * @type {object}
+     */
+    AcceleratorStyle: {
+        'opacity': 0.5
+    },
 
-    showShortcut()
-    {
-        if (this.shortcutSpan)
-        {
-            this.shortcutSpan.style.textDecoration = 'underline'
-        }
-    }
+    /**
+     * lower-level menu separator styles
+     * @type {object}
+     */
+    SeparatorStyle: {
+        'border-bottom': '1px solid rgba(0,0,0,0.1)',
+        'margin': '0.5em 0'
+    },
 
-    hideShortcut()
-    {
-        if (this.shortcutSpan)
-        {
-            this.shortcutSpan.style.textDecoration = 'none'
-        }
-    }
+    /**
+     * accelerator key styles
+     * NOTE: accelerator keys must use text-decoration as its used as a toggle in the code
+     * @type {object}
+     */
+    AcceleratorKeyStyle: {
+        'text-decoration': 'underline',
+        'text-decoration-color': 'rgba(0,0,0,0.5)'
+    },
 
-    createAccelerator(accelerator)
-    {
-        this.accelerator = html({ parent: this.div, html: accelerator ? Accelerators.prettifyKey(accelerator) :  '', styles: Config.AcceleratorStyle })
-    }
+    /**
+     * minimum column width in pixels for checked and arrow in the lower-level menus
+     * @type {number}
+     */
+    MinimumColumnWidth: 20,
 
-    createSubmenu(submenu)
-    {
-        this.arrow = html({ parent: this.div, html: submenu ? '&amp;#9658;' : '' })
-    }
+    /**
+     * CSS background style for selected MenuItems
+     * NOTE: unselected have 'transparent' style
+     * @type {string}
+     */
+    SelectedBackgroundStyle: 'rgba(0,0,0,0.1)',
 
-    closeAll()
-    {
-        let menu = this.menu
-        while (menu &amp;&amp; !menu.applicationMenu)
-        {
-            if (menu.showing)
-            {
-                menu.showing.div.style.backgroundColor = 'transparent'
-                menu.showing = null
-            }
-            menu.div.remove()
-            menu = menu.menu
-        }
-        if (menu)
-        {
-            menu.showing.div.style.background = 'transparent'
-            menu.showing = null
-            menu.showAccelerators()
-        }
-    }
+    /**
+     * number of pixels to overlap child menus
+     * @type {number}
+     */
+    Overlap: 5,
 
-    handleClick(e)
-    {
-        if (this.submenu)
-        {
-            // let menu = this.menu
-            // while (!menu.applicationMenu)
-            // {
-            //     menu = menu.menu
-            // }
-            // menu.skip = true
-            // menu.div.focus()
-            // menu.skip = false
-            if (this.submenuTimeout)
-            {
-                clearTimeout(this.submenuTimeout)
-                this.submenuTimeout = null
-            }
-            this.submenu.show(this)
-            this.div.style.backgroundColor = Config.SelectedBackgroundStyle
-        }
-        else if (this.type === 'checkbox')
-        {
-            this.checked = !this.checked
-            this.check.innerHTML = this.checked ? '&amp;#10004;' : ''
-        }
-        else
-        {
-            this.closeAll()
-        }
-
-        if (this.click)
-        {
-            this.click(e, this)
-        }
-    }
+    /**
+     * time in milliseconds to wait for submenu to open when mouse hovers
+     * @param {number}
+     */
+    SubmenuOpenDelay: 500
 }
 
-module.exports = MenuItem</code></pre>
+module.exports = Config</code></pre>
         </article>
     </section>
 

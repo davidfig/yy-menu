@@ -372,6 +372,8 @@ class Menu
         if (this.selector)
         {
             this.selector.handleClick(e)
+            e.preventDefault()
+            e.stopPropagation()
         }
     }
 
@@ -453,8 +455,24 @@ class Menu
         }
         return _accelerator
     }
-}
 
-Menu.MenuItem = MenuItem
+    /**
+     * use this to change the default Config settings across all menus
+     * @type {Config}
+     */
+    static get Config()
+    {
+        return Config
+    }
+
+    /**
+     * MenuItem definition
+     * @type {MenuItem}
+     */
+    static get MenuItem()
+    {
+        return MenuItem
+    }
+}
 
 module.exports = Menu

@@ -4,6 +4,9 @@ const MenuItem = Menu.MenuItem
 
 function test()
 {
+    // change a Menu setting
+    Menu.Config.SubmenuOpenDelay = 300
+
     const menu = new Menu()
 
     const file = new Menu()
@@ -17263,87 +17266,126 @@ class Accelerators
 
 module.exports = Accelerators
 },{"./menu":185}],183:[function(require,module,exports){
-const ApplicationContainerStyle = {
-    'z-index': 999999,
-    'position': 'fixed',
-    'top': 0,
-    'left': 0,
-    'user-select': 'none',
-    'font-size': '0.85em'
+const Config = {
+
+    /**
+     * application menu container styles
+     * @type {object}
+     */
+    ApplicationContainerStyle: {
+        'z-index': 999999,
+        'position': 'fixed',
+        'top': 0,
+        'left': 0,
+        'user-select': 'none',
+        'font-size': '0.85em'
+    },
+
+    /**
+     * application menu-bar styles
+     * @type {object}
+     */
+    ApplicationMenuStyle: {
+        'position': 'fixed',
+        'display': 'flex',
+        'flex-direction': 'row',
+        'color': 'black',
+        'backgroundColor': 'rgb(230,230,230)',
+        'width': '100vw',
+        'border': 'none',
+        'box-shadow': 'unset',
+        'outline': 'none'
+    },
+
+    /**
+     * application menu entry styles
+     * @type {object}
+     */
+    ApplicationMenuRowStyle: {
+        'padding': '0.25em 0.5em',
+        'margin': 0,
+        'line-height': '1em'
+    },
+
+    /**
+     * lower-level menu window styles
+     * @type {object}
+     */
+    MenuStyle: {
+        'flex-direction': 'column',
+        'position': 'fixed',
+        'user-select': 'none',
+        'color': 'black',
+        'z-index': 999999,
+        'backgroundColor': 'white',
+        'border': '1px solid rgba(0,0,0,0.5)',
+        'boxShadow': '1px 3px 3px rgba(0,0,0,0.25)'
+    },
+
+    /**
+     * lower-level menu row styles
+     * @type {object}
+     */
+    RowStyle: {
+        'display': 'flex',
+        'padding': '0.25em 1.5em 0.25em',
+        'line-height': '1.5em'
+    },
+
+    /**
+     * lower-level menu accelerator styles
+     * @type {object}
+     */
+    AcceleratorStyle: {
+        'opacity': 0.5
+    },
+
+    /**
+     * lower-level menu separator styles
+     * @type {object}
+     */
+    SeparatorStyle: {
+        'border-bottom': '1px solid rgba(0,0,0,0.1)',
+        'margin': '0.5em 0'
+    },
+
+    /**
+     * accelerator key styles
+     * NOTE: accelerator keys must use text-decoration as its used as a toggle in the code
+     * @type {object}
+     */
+    AcceleratorKeyStyle: {
+        'text-decoration': 'underline',
+        'text-decoration-color': 'rgba(0,0,0,0.5)'
+    },
+
+    /**
+     * minimum column width in pixels for checked and arrow in the lower-level menus
+     * @type {number}
+     */
+    MinimumColumnWidth: 20,
+
+    /**
+     * CSS background style for selected MenuItems
+     * NOTE: unselected have 'transparent' style
+     * @type {string}
+     */
+    SelectedBackgroundStyle: 'rgba(0,0,0,0.1)',
+
+    /**
+     * number of pixels to overlap child menus
+     * @type {number}
+     */
+    Overlap: 5,
+
+    /**
+     * time in milliseconds to wait for submenu to open when mouse hovers
+     * @param {number}
+     */
+    SubmenuOpenDelay: 500
 }
 
-const ApplicationMenuStyle = {
-    'position': 'fixed',
-    'display': 'flex',
-    'flex-direction': 'row',
-    'color': 'black',
-    'backgroundColor': 'rgb(230,230,230)',
-    'width': '100vw',
-    'border': 'none',
-    'box-shadow': 'unset',
-    'outline': 'none'
-}
-
-const MenuStyle = {
-    'flex-direction': 'column',
-    'position': 'fixed',
-    'user-select': 'none',
-    'color': 'black',
-    'z-index': 999999,
-    'backgroundColor': 'white',
-    'border': '1px solid rgba(0,0,0,0.5)',
-    'boxShadow': '1px 3px 3px rgba(0,0,0,0.25)'
-}
-
-const ApplicationMenuRowStyle = {
-    'padding': '0.25em 0.5em',
-    'margin': 0,
-    'line-height': '1em'
-}
-
-const RowStyle = {
-    'display': 'flex',
-    'padding': '0.25em 1.5em 0.25em',
-    'line-height': '1.5em'
-}
-
-const AcceleratorStyle = {
-    'opacity': 0.5
-}
-
-const SeparatorStyle = {
-    'border-bottom': '1px solid rgba(0,0,0,0.1)',
-    'margin': '0.5em 0'
-}
-
-const AcceleratorKeyStyle = {
-    'text-decoration': 'underline',
-    'text-decoration-color': 'rgba(0,0,0,0.5)'
-}
-
-const MinimumColumnWidth = 20
-
-const SelectedBackgroundStyle = 'rgba(0,0,0,0.1)'
-
-const Overlap = 5
-
-// time to wait for submenu to open when hovering
-const SubmenuOpenDelay = 500
-
-module.exports = {
-    ApplicationContainerStyle,
-    ApplicationMenuStyle,
-    MenuStyle,
-    ApplicationMenuRowStyle,
-    RowStyle,
-    AcceleratorStyle,
-    AcceleratorKeyStyle,
-    SeparatorStyle,
-    MinimumColumnWidth,
-    SelectedBackgroundStyle,
-    Overlap,
-    SubmenuOpenDelay
-}
+module.exports = Config
 },{}],184:[function(require,module,exports){
 module.exports = function (options)
 {
@@ -17741,6 +17783,8 @@ class Menu
         if (this.selector)
         {
             this.selector.handleClick(e)
+            e.preventDefault()
+            e.stopPropagation()
         }
     }
 
@@ -17822,9 +17866,25 @@ class Menu
         }
         return _accelerator
     }
-}
 
-Menu.MenuItem = MenuItem
+    /**
+     * use this to change the default Config settings across all menus
+     * @type {Config}
+     */
+    static get Config()
+    {
+        return Config
+    }
+
+    /**
+     * MenuItem definition
+     * @type {MenuItem}
+     */
+    static get MenuItem()
+    {
+        return MenuItem
+    }
+}
 
 module.exports = Menu
 },{"./accelerators":182,"./config":183,"./html":184,"./menuItem":186}],186:[function(require,module,exports){
