@@ -24,6 +24,14 @@ class Accelerators
     }
 
     /**
+     * clear all user-registered keys
+     */
+    clearKeys()
+    {
+        this.keys = {}
+    }
+
+    /**
      * Register a shortcut key for use by an open menu
      * @param {KeyCodes} letter
      * @param {MenuItem} menuItem

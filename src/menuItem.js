@@ -190,14 +190,6 @@ class MenuItem
     {
         if (this.submenu)
         {
-            // let menu = this.menu
-            // while (!menu.applicationMenu)
-            // {
-            //     menu = menu.menu
-            // }
-            // menu.skip = true
-            // menu.div.focus()
-            // menu.skip = false
             if (this.submenuTimeout)
             {
                 clearTimeout(this.submenuTimeout)
@@ -210,6 +202,7 @@ class MenuItem
         {
             this.checked = !this.checked
             this.check.innerHTML = this.checked ? '&#10004;' : ''
+            this.closeAll()
         }
         else
         {
