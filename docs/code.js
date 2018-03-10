@@ -20,7 +20,7 @@ function test()
     menu.append(new MenuItem({ label: '&File', submenu: file }))
 
     const submenu = new Menu()
-    submenu.append(new MenuItem({ label: 'first' }))
+    submenu.append(new MenuItem({ label: 'first', accelerator: 'ctrl+a | ctrl+b', click: () => console.log('first pressed') }))
     submenu.append(new MenuItem({ label: 'second' }))
     submenu.append(new MenuItem({ label: 'third' }))
     submenu.append(new MenuItem({ label: 'fourth' }))

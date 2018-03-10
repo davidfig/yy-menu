@@ -21,7 +21,7 @@ function test()
     menu.append(new MenuItem({ label: '&File', submenu: file }))
 
     const submenu = new Menu()
-    submenu.append(new MenuItem({ label: 'first' }))
+    submenu.append(new MenuItem({ label: 'first', accelerator: 'ctrl+a | ctrl+b', click: () => console.log('first pressed') }))
     submenu.append(new MenuItem({ label: 'second' }))
     submenu.append(new MenuItem({ label: 'third' }))
     submenu.append(new MenuItem({ label: 'fourth' }))
@@ -17253,7 +17253,8 @@ const GlobalAccelerator = {
     /**
      * Keycodes definition. In the form of modifier[+modifier...]+key
      * <p>For example: ctrl+shift+e</p>
-     * <p>KeyCodes are case insensitive (i.e., shift+a is the same as Shift+A)</p>
+     * <p>KeyCodes are case insensitive (i.e., shift+a is the same as Shift+A). And spaces are removed</p>
+     * <p>You can assign more than one key to the same shortcut by using a | between the keys (e.g., 'shift+a | ctrl+a')</p>
      * <pre>
      * Modifiers:
      *    ctrl, alt, shift, meta, (ctrl aliases: command, control, commandorcontrol)
@@ -17279,32 +17280,46 @@ const GlobalAccelerator = {
      */
     prepareKey: function(keyCode)
     {
-        let modifiers = []
-        let key = ''
-        keyCode = keyCode.toLowerCase()
-        if (keyCode.indexOf('+') !== -1)
+        const keys = []
+        let split
+        if (keyCode.indexOf('|') !== -1)
         {
-            const split = keyCode.toLowerCase().split('+')
-            for (let i = 0; i < split.length - 1; i++)
-            {
-                let modifier = split[i]
-                modifier = modifier.replace('commandorcontrol', 'ctrl')
-                modifier = modifier.replace('command', 'ctrl')
-                modifier = modifier.replace('control', 'ctrl')
-                modifiers.push(modifier)
-            }
-            modifiers = modifiers.sort((a, b) => { return a[0] > b[0] ? 1 : a[0] < b[0] ? -1 : 0 })
-            for (let part of modifiers)
-            {
-                key += part + '+'
-            }
-            key += split[split.length - 1]
+            split = keyCode.split('|')
         }
         else
         {
-            key = keyCode
+            split = [keyCode]
         }
-        return key
+        for (let code of split)
+        {
+            let key = ''
+            let modifiers = []
+            code = code.toLowerCase().replace(' ', '')
+            if (code.indexOf('+') !== -1)
+            {
+                const split = code.toLowerCase().split('+')
+                for (let i = 0; i < split.length - 1; i++)
+                {
+                    let modifier = split[i]
+                    modifier = modifier.replace('commandorcontrol', 'ctrl')
+                    modifier = modifier.replace('command', 'ctrl')
+                    modifier = modifier.replace('control', 'ctrl')
+                    modifiers.push(modifier)
+                }
+                modifiers = modifiers.sort((a, b) => { return a[0] > b[0] ? 1 : a[0] < b[0] ? -1 : 0 })
+                for (let part of modifiers)
+                {
+                    key += part + '+'
+                }
+                key += split[split.length - 1]
+            }
+            else
+            {
+                key = keyCode
+            }
+            keys.push(key)
+        }
+        return keys
     },
 
     /**
@@ -17315,21 +17330,29 @@ const GlobalAccelerator = {
      */
     prettifyKey: function(keyCode)
     {
-        keyCode = GlobalAccelerator.prepareKey(keyCode)
         let key = ''
-        if (keyCode.indexOf('+') !== -1)
+        const codes = GlobalAccelerator.prepareKey(keyCode)
+        for (let i = 0; i < codes.length; i++)
         {
-            const split = keyCode.toLowerCase().split('+')
-            for (let i = 0; i < split.length - 1; i++)
+            const keyCode = codes[i]
+            if (keyCode.indexOf('+') !== -1)
             {
-                let modifier = split[i]
-                key += modifier[0].toUpperCase() + modifier.substr(1) + '+'
+                const split = keyCode.toLowerCase().split('+')
+                for (let i = 0; i < split.length - 1; i++)
+                {
+                    let modifier = split[i]
+                    key += modifier[0].toUpperCase() + modifier.substr(1) + '+'
+                }
+                key += split[split.length - 1].toUpperCase()
             }
-            key += split[split.length - 1].toUpperCase()
-        }
-        else
-        {
-            key = keyCode.toUpperCase()
+            else
+            {
+                key = keyCode.toUpperCase()
+            }
+            if (i !== codes.length - 1)
+            {
+                key += ' or '
+            }
         }
         return key
     },
@@ -17341,11 +17364,15 @@ const GlobalAccelerator = {
      */
     register: function(keyCode, callback)
     {
-        GlobalAccelerator.keys[GlobalAccelerator.prepareKey(keyCode)] = (e) =>
+        const keys = GlobalAccelerator.prepareKey(keyCode)
+        for (let key of keys)
         {
-            callback(e)
-            e.preventDefault()
-            e.stopPropagation()
+            GlobalAccelerator.keys[key] = (e) =>
+            {
+                callback(e)
+                e.preventDefault()
+                e.stopPropagation()
+            }
         }
     },
 
