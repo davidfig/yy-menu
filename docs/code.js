@@ -43,7 +43,7 @@ function test()
 
     Menu.setApplicationMenu(menu)
 
-    Menu.GlobalAccelarator.register('a', () => console.log('hi'))
+    Menu.GlobalAccelerator.register('a', () => console.log('hi'))
 }
 
 window.onload = function ()

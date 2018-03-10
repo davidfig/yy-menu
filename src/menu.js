@@ -1,4 +1,4 @@
-const Styles =   require('./styles')
+const Config =   require('./config')
 const MenuItem = require('./menuItem')
 const Accelerators = require('./accelerators')
 const html = require('./html')
@@ -18,7 +18,8 @@ class Menu
         this.div = document.createElement('div')
         this.styles = options.styles
         this.children = []
-        this.applyStyles(Styles.MenuStyle)
+        this.applyConfig(Config.MenuStyle)
+        this.div.tabIndex = -1
     }
 
     /**
@@ -84,7 +85,7 @@ class Menu
 
     show(menuItem)
     {
-        Menu.GlobalAccelerator.unregisterMenuShortcuts()
+        // Menu.GlobalAccelerator.unregisterMenuShortcuts()
         if (this.menu && this.menu.showing === menuItem)
         {
             this.hide()
@@ -112,8 +113,8 @@ class Menu
             }
             else
             {
-                this.div.style.left = parent.offsetLeft + parent.offsetWidth - Styles.Overlap + 'px'
-                this.div.style.top = parent.offsetTop + div.offsetTop - Styles.Overlap + 'px'
+                this.div.style.left = parent.offsetLeft + parent.offsetWidth - Config.Overlap + 'px'
+                this.div.style.top = parent.offsetTop + div.offsetTop - Config.Overlap + 'px'
             }
             this.attached = menuItem
             this.showAccelerators()
@@ -127,11 +128,11 @@ class Menu
                 child.arrow.style.width = 'auto'
                 if (child.type === 'checkbox')
                 {
-                    checked = Styles.MinimumColumnWidth
+                    checked = Config.MinimumColumnWidth
                 }
                 if (child.submenu)
                 {
-                    arrow = Styles.MinimumColumnWidth
+                    arrow = Config.MinimumColumnWidth
                 }
             }
             for (let child of this.children)
@@ -163,7 +164,7 @@ class Menu
         }
     }
 
-    applyStyles(base)
+    applyConfig(base)
     {
         const styles = {}
         for (let style in base)
@@ -349,7 +350,7 @@ class Menu
                 this.selector = this.children[0]
             }
         }
-        this.selector.div.style.backgroundColor = Styles.SelectedBackground
+        this.selector.div.style.backgroundColor = Config.SelectedBackgroundStyle
         e.preventDefault()
         e.stopPropagation()
     }
@@ -395,22 +396,40 @@ class Menu
         {
             _application.remove()
         }
-        _application = html({ parent: document.body, styles: Styles.ApplicationContainer })
+        _application = html({ parent: document.body, styles: Config.ApplicationContainerStyle })
         _application.menu = menu
-        menu.applyStyles(Styles.ApplicationMenuStyle)
+        menu.applyConfig(Config.ApplicationMenuStyle)
         for (let child of menu.children)
         {
-            child.applyStyles(Styles.ApplicationMenuRowStyle)
+            child.applyConfig(Config.ApplicationMenuRowStyle)
             if (child.arrow)
             {
                 child.arrow.style.display = 'none'
             }
             menu.div.appendChild(child.div)
         }
-        menu.div.tabIndex = -1
+
         _application.appendChild(menu.div)
         menu.applicationMenu = true
-        menu.div.addEventListener('blur', () => menu.closeAll())
+        menu.div.tabIndex = -1
+
+        // don't let menu bar focus unless windows are open (this fixes a focus bug)
+        menu.div.addEventListener('focus', () =>
+        {
+            if (!menu.showing)
+            {
+                menu.div.blur()
+            }
+        })
+
+        // close all windows if menu is no longer the focus
+        menu.div.addEventListener('blur', () =>
+        {
+            if (menu.showing)
+            {
+                menu.closeAll()
+            }
+        })
         menu.showAccelerators()
     }
 

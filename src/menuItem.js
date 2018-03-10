@@ -1,5 +1,5 @@
 const html = require('./html')
-const Styles = require('./styles')
+const Config = require('./config')
 const Accelerators = require('./accelerators')
 
 class MenuItem
@@ -22,22 +22,22 @@ class MenuItem
         this.click = options.click
         if (this.type === 'separator')
         {
-            this.applyStyles(Styles.Separator)
+            this.applyConfig(Config.SeparatorStyle)
         }
         else
         {
             this.checked = options.checked
             this.createChecked(options.checked)
             this.text = options.label || '&nbsp;&nbsp;&nbsp;'
-            this.label = html({ parent: this.div })
+            this.createShortcut()
             this.createAccelerator(options.accelerator)
             this.createSubmenu(options.submenu)
             if (options.submenu)
             {
                 this.submenu = options.submenu
-                this.submenu.applyStyles(Styles.MenuStyle)
+                this.submenu.applyConfig(Config.MenuStyle)
             }
-            this.applyStyles(Styles.RowStyle)
+            this.applyConfig(Config.RowStyle)
             this.div.addEventListener('mousedown', (e) => this.handleClick(e))
             this.div.addEventListener('touchstart', (e) => this.handleClick(e))
             this.div.addEventListener('mouseenter', () => this.mouseenter())
@@ -55,14 +55,14 @@ class MenuItem
     {
         if (!this.submenu || this.menu.showing !== this )
         {
-            this.div.style.backgroundColor = Styles.SelectedBackground
+            this.div.style.backgroundColor = Config.SelectedBackgroundStyle
             if (this.submenu && !this.menu.applicationMenu)
             {
                 this.submenuTimeout = setTimeout(() =>
                 {
                     this.submenuTimeout = null
                     this.submenu.show(this)
-                }, Styles.SubmenuOpenDelay)
+                }, Config.SubmenuOpenDelay)
             }
         }
     }
@@ -80,7 +80,7 @@ class MenuItem
         }
     }
 
-    applyStyles(base)
+    applyConfig(base)
     {
         const styles = {}
         for (let style in base)
@@ -105,12 +105,12 @@ class MenuItem
         this.check = html({ parent: this.div, html: checked ? '&#10004;' : '' })
     }
 
-    showShortcut()
+    createShortcut()
     {
         if (this.type !== 'separator')
         {
-            this.label.innerHTML = ''
             const text = this.text
+            this.label = html({ parent: this.div })
             let current = html({ parent: this.label, type: 'span' })
             if (text.indexOf('&') !== -1)
             {
@@ -121,7 +121,7 @@ class MenuItem
                     if (letter === '&')
                     {
                         i++
-                        html({ parent: this.label, type: 'span', html: text[i], styles: Styles.AcceleratorKey })
+                        this.shortcutSpan = html({ parent: this.label, type: 'span', html: text[i], styles: Config.AcceleratorKeyStyle })
                         current = html({ parent: this.label, type: 'span' })
                     }
                     else
@@ -136,23 +136,28 @@ class MenuItem
             {
                 this.label.innerHTML = text
             }
-            this.shortcutAvailable = true
+        }
+    }
+
+    showShortcut()
+    {
+        if (this.shortcutSpan)
+        {
+            this.shortcutSpan.style.textDecoration = 'underline'
         }
     }
 
     hideShortcut()
     {
-        if (this.type !== 'separator')
+        if (this.shortcutSpan)
         {
-            const text = this.text.replace('&', '')
-            this.label.innerHTML = text
-            this.shortcutAvailable = true
+            this.shortcutSpan.style.textDecoration = 'none'
         }
     }
 
     createAccelerator(accelerator)
     {
-        this.accelerator = html({ parent: this.div, html: accelerator ? Accelerators.prettifyKey(accelerator) :  '', styles: Styles.Accelerator})
+        this.accelerator = html({ parent: this.div, html: accelerator ? Accelerators.prettifyKey(accelerator) :  '', styles: Config.AcceleratorStyle })
     }
 
     createSubmenu(submenu)
@@ -185,13 +190,21 @@ class MenuItem
     {
         if (this.submenu)
         {
+            // let menu = this.menu
+            // while (!menu.applicationMenu)
+            // {
+            //     menu = menu.menu
+            // }
+            // menu.skip = true
+            // menu.div.focus()
+            // menu.skip = false
             if (this.submenuTimeout)
             {
                 clearTimeout(this.submenuTimeout)
                 this.submenuTimeout = null
             }
             this.submenu.show(this)
-            this.div.style.backgroundColor = Styles.SelectedBackground
+            this.div.style.backgroundColor = Config.SelectedBackgroundStyle
         }
         else if (this.type === 'checkbox')
         {
@@ -202,6 +215,7 @@ class MenuItem
         {
             this.closeAll()
         }
+
         if (this.click)
         {
             this.click(e, this)
