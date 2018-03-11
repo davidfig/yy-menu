@@ -215,7 +215,7 @@ const LocalAccelerator = {
         let keyCode = ''
         for (let modifier of modifiers)
         {
-            keyCode = modifier + '+'
+            keyCode += modifier + '+'
         }
         let translate = e.code.toLowerCase()
         translate = translate.replace('digit', '')

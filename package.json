@@ -1,6 +1,6 @@
 {
   "name": "yy-menu",
-  "version": "1.5.1",
+  "version": "1.5.2",
   "description": "A traditional menu system for web apps inspired by Electron",
   "keywords": [
     "menu",
