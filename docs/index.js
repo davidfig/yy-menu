@@ -15,7 +15,8 @@ function test()
     file.append(new MenuItem({ label: '&Save...', accelerator: 'CommandOrControl+S' }))
     file.insert(1, new MenuItem({ label: '&Open...', accelerator: 'CommandOrControl+O', click: () => console.log('open pressed') }))
     file.append(new MenuItem({ type: 'separator' }))
-    file.append(new MenuItem({ label: '&Autosave', type: 'checkbox', checked: true }))
+    const autosave = new MenuItem({ label: '&Autosave', type: 'checkbox', checked: false })
+    file.append(autosave)
     file.append(new MenuItem({ type: 'separator' }))
     file.append(new MenuItem({ label: 'E&xit' }))
 
@@ -53,6 +54,9 @@ function test()
     Menu.setApplicationMenu(menu)
 
     LocalAccelerator.register('a', () => console.log('hi'))
+
+    // test checked change
+    autosave.checked = true
 }
 
 window.onload = function ()
@@ -17942,7 +17946,7 @@ class MenuItem
         }
         else
         {
-            this.checked = options.checked
+            this._checked = options.checked
             this.createChecked(options.checked)
             this.text = options.label || '&nbsp;&nbsp;&nbsp;'
             this.createShortcut()
@@ -18122,7 +18126,6 @@ class MenuItem
         else if (this.type === 'checkbox')
         {
             this.checked = !this.checked
-            this.check.innerHTML = this.checked ? '&#10004;' : ''
             this.closeAll()
         }
         else
@@ -18134,6 +18137,16 @@ class MenuItem
         {
             this.click(e, this)
         }
+    }
+
+    get checked()
+    {
+        return this._checked
+    }
+    set checked(value)
+    {
+        this._checked = value
+        this.check.innerHTML = this._checked ? '&#10004;' : ''
     }
 }
 

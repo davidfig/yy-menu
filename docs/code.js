@@ -14,7 +14,8 @@ function test()
     file.append(new MenuItem({ label: '&Save...', accelerator: 'CommandOrControl+S' }))
     file.insert(1, new MenuItem({ label: '&Open...', accelerator: 'CommandOrControl+O', click: () => console.log('open pressed') }))
     file.append(new MenuItem({ type: 'separator' }))
-    file.append(new MenuItem({ label: '&Autosave', type: 'checkbox', checked: true }))
+    const autosave = new MenuItem({ label: '&Autosave', type: 'checkbox', checked: false })
+    file.append(autosave)
     file.append(new MenuItem({ type: 'separator' }))
     file.append(new MenuItem({ label: 'E&xit' }))
 
@@ -52,6 +53,9 @@ function test()
     Menu.setApplicationMenu(menu)
 
     LocalAccelerator.register('a', () => console.log('hi'))
+
+    // test checked change
+    autosave.checked = true
 }
 
 window.onload = function ()

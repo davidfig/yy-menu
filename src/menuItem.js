@@ -27,7 +27,7 @@ class MenuItem
         }
         else
         {
-            this.checked = options.checked
+            this._checked = options.checked
             this.createChecked(options.checked)
             this.text = options.label || '&nbsp;&nbsp;&nbsp;'
             this.createShortcut()
@@ -207,7 +207,6 @@ class MenuItem
         else if (this.type === 'checkbox')
         {
             this.checked = !this.checked
-            this.check.innerHTML = this.checked ? '&#10004;' : ''
             this.closeAll()
         }
         else
@@ -219,6 +218,16 @@ class MenuItem
         {
             this.click(e, this)
         }
+    }
+
+    get checked()
+    {
+        return this._checked
+    }
+    set checked(value)
+    {
+        this._checked = value
+        this.check.innerHTML = this._checked ? '&#10004;' : ''
     }
 }
 
