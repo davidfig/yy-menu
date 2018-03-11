@@ -1,15 +1,15 @@
 /**
  * Handles all keyboard input for the menu and user-registered keys
  */
-const GlobalAccelerator = {
+const localAccelerator = {
 
     init: function()
     {
-        if (!GlobalAccelerator.menuKeys)
+        if (!localAccelerator.menuKeys)
         {
-            GlobalAccelerator.menuKeys = {}
-            GlobalAccelerator.keys = {}
-            document.body.addEventListener('keydown', (e) => GlobalAccelerator.keyDown(this, e))
+            localAccelerator.menuKeys = {}
+            localAccelerator.keys = {}
+            document.body.addEventListener('keydown', (e) => localAccelerator.keyDown(this, e))
         }
     },
 
@@ -18,7 +18,7 @@ const GlobalAccelerator = {
      */
     clearKeys: function()
     {
-        GlobalAccelerator.keys = {}
+        localAccelerator.keys = {}
     },
 
     /**
@@ -33,7 +33,7 @@ const GlobalAccelerator = {
         if (letter)
         {
             const keyCode = (menuItem.menu.applicationMenu ? 'alt+' : '') + letter
-            GlobalAccelerator.menuKeys[GlobalAccelerator.prepareKey(keyCode)] = (e) =>
+            localAccelerator.menuKeys[localAccelerator.prepareKey(keyCode)] = (e) =>
             {
                 menuItem.handleClick(e)
                 e.stopPropagation()
@@ -49,13 +49,13 @@ const GlobalAccelerator = {
      */
     registerMenuSpecial: function(menu)
     {
-        GlobalAccelerator.menuKeys['escape'] = () => menu.closeAll()
-        GlobalAccelerator.menuKeys['enter'] = (e) => menu.enter(e)
-        GlobalAccelerator.menuKeys['space'] = (e) => menu.enter(e)
-        GlobalAccelerator.menuKeys['arrowright'] = (e) => menu.move(e, 'right')
-        GlobalAccelerator.menuKeys['arrowleft'] = (e) => menu.move(e, 'left')
-        GlobalAccelerator.menuKeys['arrowup'] = (e) => menu.move(e, 'up')
-        GlobalAccelerator.menuKeys['arrowdown'] = (e) => menu.move(e, 'down')
+        localAccelerator.menuKeys['escape'] = () => menu.closeAll()
+        localAccelerator.menuKeys['enter'] = (e) => menu.enter(e)
+        localAccelerator.menuKeys['space'] = (e) => menu.enter(e)
+        localAccelerator.menuKeys['arrowright'] = (e) => menu.move(e, 'right')
+        localAccelerator.menuKeys['arrowleft'] = (e) => menu.move(e, 'left')
+        localAccelerator.menuKeys['arrowup'] = (e) => menu.move(e, 'up')
+        localAccelerator.menuKeys['arrowdown'] = (e) => menu.move(e, 'down')
     },
 
     /**
@@ -64,7 +64,7 @@ const GlobalAccelerator = {
      */
     unregisterMenuShortcuts: function()
     {
-        GlobalAccelerator.menuKeys = {}
+        localAccelerator.menuKeys = {}
     },
 
     /**
@@ -86,7 +86,7 @@ const GlobalAccelerator = {
      * </pre>
      * For OS-specific codes and a more detailed explanation see {@link https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/code}. Also note that 'Digit' and 'Key' are removed from the code to make it easier to type.
      *
-     * @typedef {string} GlobalAccelerator~KeyCodes
+     * @typedef {string} localAccelerator~KeyCodes
      */
 
     /**
@@ -148,7 +148,7 @@ const GlobalAccelerator = {
     prettifyKey: function(keyCode)
     {
         let key = ''
-        const codes = GlobalAccelerator.prepareKey(keyCode)
+        const codes = localAccelerator.prepareKey(keyCode)
         for (let i = 0; i < codes.length; i++)
         {
             const keyCode = codes[i]
@@ -181,10 +181,10 @@ const GlobalAccelerator = {
      */
     register: function(keyCode, callback)
     {
-        const keys = GlobalAccelerator.prepareKey(keyCode)
+        const keys = localAccelerator.prepareKey(keyCode)
         for (let key of keys)
         {
-            GlobalAccelerator.keys[key] = (e) =>
+            localAccelerator.keys[key] = (e) =>
             {
                 callback(e)
                 e.preventDefault()
@@ -221,15 +221,15 @@ const GlobalAccelerator = {
         translate = translate.replace('digit', '')
         translate = translate.replace('key', '')
         keyCode += translate
-        if (GlobalAccelerator.menuKeys[keyCode])
+        if (localAccelerator.menuKeys[keyCode])
         {
-            GlobalAccelerator.menuKeys[keyCode](e, this)
+            localAccelerator.menuKeys[keyCode](e, this)
         }
-        else if (GlobalAccelerator.keys[keyCode])
+        else if (localAccelerator.keys[keyCode])
         {
-            GlobalAccelerator.keys[keyCode](e, this)
+            localAccelerator.keys[keyCode](e, this)
         }
     }
 }
 
-module.exports = GlobalAccelerator
+module.exports = localAccelerator

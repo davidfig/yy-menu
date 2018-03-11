@@ -1,6 +1,6 @@
 const html = require('./html')
 const Config = require('./config')
-const GlobalAccelerator = require('./globalAccelerator')
+const localAccelerator = require('./localAccelerator')
 
 class MenuItem
 {
@@ -15,7 +15,7 @@ class MenuItem
      */
     constructor(options)
     {
-        GlobalAccelerator.init()
+        localAccelerator.init()
         options = options || {}
         this.styles = options.styles
         this.div = html()
@@ -158,10 +158,10 @@ class MenuItem
 
     createAccelerator(accelerator)
     {
-        this.accelerator = html({ parent: this.div, html: accelerator ? GlobalAccelerator.prettifyKey(accelerator) : '', styles: Config.AcceleratorStyle })
+        this.accelerator = html({ parent: this.div, html: accelerator ? localAccelerator.prettifyKey(accelerator) : '', styles: Config.AcceleratorStyle })
         if (accelerator)
         {
-            GlobalAccelerator.register(accelerator, (e) => this.click(e))
+            localAccelerator.register(accelerator, (e) => this.click(e))
         }
     }
 
@@ -173,7 +173,7 @@ class MenuItem
     closeAll()
     {
         let menu = this.menu
-        GlobalAccelerator.unregisterMenuShortcuts()
+        localAccelerator.unregisterMenuShortcuts()
         while (menu && !menu.applicationMenu)
         {
             if (menu.showing)

@@ -51,7 +51,7 @@ function test()
 
     Menu.setApplicationMenu(menu)
 
-    Menu.GlobalAccelerator.register('a', () => console.log('hi'))
+    Menu.localAccelerator.register('a', () => console.log('hi'))
 }
 
 window.onload = function ()
@@ -17185,18 +17185,40 @@ const Config = {
 
 module.exports = Config
 },{}],183:[function(require,module,exports){
+module.exports = function (options)
+{
+    options = options || {}
+    const object = document.createElement(options.type || 'div')
+    if (options.parent)
+    {
+        options.parent.appendChild(object)
+    }
+    if (options.styles)
+    {
+        for (let style in options.styles)
+        {
+            object.style[style] = options.styles[style]
+        }
+    }
+    if (options.html)
+    {
+        object.innerHTML = options.html
+    }
+    return object
+}
+},{}],184:[function(require,module,exports){
 /**
  * Handles all keyboard input for the menu and user-registered keys
  */
-const GlobalAccelerator = {
+const localAccelerator = {
 
     init: function()
     {
-        if (!GlobalAccelerator.menuKeys)
+        if (!localAccelerator.menuKeys)
         {
-            GlobalAccelerator.menuKeys = {}
-            GlobalAccelerator.keys = {}
-            document.body.addEventListener('keydown', (e) => GlobalAccelerator.keyDown(this, e))
+            localAccelerator.menuKeys = {}
+            localAccelerator.keys = {}
+            document.body.addEventListener('keydown', (e) => localAccelerator.keyDown(this, e))
         }
     },
 
@@ -17205,7 +17227,7 @@ const GlobalAccelerator = {
      */
     clearKeys: function()
     {
-        GlobalAccelerator.keys = {}
+        localAccelerator.keys = {}
     },
 
     /**
@@ -17220,7 +17242,7 @@ const GlobalAccelerator = {
         if (letter)
         {
             const keyCode = (menuItem.menu.applicationMenu ? 'alt+' : '') + letter
-            GlobalAccelerator.menuKeys[GlobalAccelerator.prepareKey(keyCode)] = (e) =>
+            localAccelerator.menuKeys[localAccelerator.prepareKey(keyCode)] = (e) =>
             {
                 menuItem.handleClick(e)
                 e.stopPropagation()
@@ -17236,13 +17258,13 @@ const GlobalAccelerator = {
      */
     registerMenuSpecial: function(menu)
     {
-        GlobalAccelerator.menuKeys['escape'] = () => menu.closeAll()
-        GlobalAccelerator.menuKeys['enter'] = (e) => menu.enter(e)
-        GlobalAccelerator.menuKeys['space'] = (e) => menu.enter(e)
-        GlobalAccelerator.menuKeys['arrowright'] = (e) => menu.move(e, 'right')
-        GlobalAccelerator.menuKeys['arrowleft'] = (e) => menu.move(e, 'left')
-        GlobalAccelerator.menuKeys['arrowup'] = (e) => menu.move(e, 'up')
-        GlobalAccelerator.menuKeys['arrowdown'] = (e) => menu.move(e, 'down')
+        localAccelerator.menuKeys['escape'] = () => menu.closeAll()
+        localAccelerator.menuKeys['enter'] = (e) => menu.enter(e)
+        localAccelerator.menuKeys['space'] = (e) => menu.enter(e)
+        localAccelerator.menuKeys['arrowright'] = (e) => menu.move(e, 'right')
+        localAccelerator.menuKeys['arrowleft'] = (e) => menu.move(e, 'left')
+        localAccelerator.menuKeys['arrowup'] = (e) => menu.move(e, 'up')
+        localAccelerator.menuKeys['arrowdown'] = (e) => menu.move(e, 'down')
     },
 
     /**
@@ -17251,7 +17273,7 @@ const GlobalAccelerator = {
      */
     unregisterMenuShortcuts: function()
     {
-        GlobalAccelerator.menuKeys = {}
+        localAccelerator.menuKeys = {}
     },
 
     /**
@@ -17273,7 +17295,7 @@ const GlobalAccelerator = {
      * </pre>
      * For OS-specific codes and a more detailed explanation see {@link https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/code}. Also note that 'Digit' and 'Key' are removed from the code to make it easier to type.
      *
-     * @typedef {string} GlobalAccelerator~KeyCodes
+     * @typedef {string} localAccelerator~KeyCodes
      */
 
     /**
@@ -17335,7 +17357,7 @@ const GlobalAccelerator = {
     prettifyKey: function(keyCode)
     {
         let key = ''
-        const codes = GlobalAccelerator.prepareKey(keyCode)
+        const codes = localAccelerator.prepareKey(keyCode)
         for (let i = 0; i < codes.length; i++)
         {
             const keyCode = codes[i]
@@ -17368,10 +17390,10 @@ const GlobalAccelerator = {
      */
     register: function(keyCode, callback)
     {
-        const keys = GlobalAccelerator.prepareKey(keyCode)
+        const keys = localAccelerator.prepareKey(keyCode)
         for (let key of keys)
         {
-            GlobalAccelerator.keys[key] = (e) =>
+            localAccelerator.keys[key] = (e) =>
             {
                 callback(e)
                 e.preventDefault()
@@ -17408,44 +17430,22 @@ const GlobalAccelerator = {
         translate = translate.replace('digit', '')
         translate = translate.replace('key', '')
         keyCode += translate
-        if (GlobalAccelerator.menuKeys[keyCode])
+        if (localAccelerator.menuKeys[keyCode])
         {
-            GlobalAccelerator.menuKeys[keyCode](e, this)
+            localAccelerator.menuKeys[keyCode](e, this)
         }
-        else if (GlobalAccelerator.keys[keyCode])
+        else if (localAccelerator.keys[keyCode])
         {
-            GlobalAccelerator.keys[keyCode](e, this)
+            localAccelerator.keys[keyCode](e, this)
         }
     }
 }
 
-module.exports = GlobalAccelerator
-},{}],184:[function(require,module,exports){
-module.exports = function (options)
-{
-    options = options || {}
-    const object = document.createElement(options.type || 'div')
-    if (options.parent)
-    {
-        options.parent.appendChild(object)
-    }
-    if (options.styles)
-    {
-        for (let style in options.styles)
-        {
-            object.style[style] = options.styles[style]
-        }
-    }
-    if (options.html)
-    {
-        object.innerHTML = options.html
-    }
-    return object
-}
+module.exports = localAccelerator
 },{}],185:[function(require,module,exports){
 const Config =   require('./config')
 const MenuItem = require('./menuItem')
-const GlobalAccelerator = require('./globalAccelerator')
+const localAccelerator = require('./localAccelerator')
 const html = require('./html')
 
 let _application
@@ -17530,7 +17530,7 @@ class Menu
 
     show(menuItem)
     {
-        Menu.GlobalAccelerator.unregisterMenuShortcuts()
+        Menu.localAccelerator.unregisterMenuShortcuts()
         if (this.menu && this.menu.showing === menuItem)
         {
             this.hide()
@@ -17639,13 +17639,13 @@ class Menu
                 const index = child.text.indexOf('&')
                 if (index !== -1)
                 {
-                    Menu.GlobalAccelerator.registerMenuShortcut(child.text[index + 1], child)
+                    Menu.localAccelerator.registerMenuShortcut(child.text[index + 1], child)
                 }
             }
         }
         if (!this.applicationMenu)
         {
-            Menu.GlobalAccelerator.registerMenuSpecial(this)
+            Menu.localAccelerator.registerMenuSpecial(this)
         }
     }
 
@@ -17659,7 +17659,7 @@ class Menu
 
     closeAll()
     {
-        Menu.GlobalAccelerator.unregisterMenuShortcuts()
+        Menu.localAccelerator.unregisterMenuShortcuts()
         let application = _application.menu
         if (application.showing)
         {
@@ -17840,7 +17840,7 @@ class Menu
      */
     static setApplicationMenu(menu)
     {
-        GlobalAccelerator.init()
+        localAccelerator.init()
         if (_application)
         {
             _application.remove()
@@ -17883,12 +17883,12 @@ class Menu
     }
 
     /**
-     * GlobalAccelerator definition
+     * localAccelerator definition
      * @type {Accelerator}
      */
-    static get GlobalAccelerator()
+    static get localAccelerator()
     {
-        return GlobalAccelerator
+        return localAccelerator
     }
 
     /**
@@ -17911,10 +17911,10 @@ class Menu
 }
 
 module.exports = Menu
-},{"./config":182,"./globalAccelerator":183,"./html":184,"./menuItem":186}],186:[function(require,module,exports){
+},{"./config":182,"./html":183,"./localAccelerator":184,"./menuItem":186}],186:[function(require,module,exports){
 const html = require('./html')
 const Config = require('./config')
-const GlobalAccelerator = require('./globalAccelerator')
+const localAccelerator = require('./localAccelerator')
 
 class MenuItem
 {
@@ -17929,7 +17929,7 @@ class MenuItem
      */
     constructor(options)
     {
-        GlobalAccelerator.init()
+        localAccelerator.init()
         options = options || {}
         this.styles = options.styles
         this.div = html()
@@ -18072,10 +18072,10 @@ class MenuItem
 
     createAccelerator(accelerator)
     {
-        this.accelerator = html({ parent: this.div, html: accelerator ? GlobalAccelerator.prettifyKey(accelerator) : '', styles: Config.AcceleratorStyle })
+        this.accelerator = html({ parent: this.div, html: accelerator ? localAccelerator.prettifyKey(accelerator) : '', styles: Config.AcceleratorStyle })
         if (accelerator)
         {
-            GlobalAccelerator.register(accelerator, (e) => this.click(e))
+            localAccelerator.register(accelerator, (e) => this.click(e))
         }
     }
 
@@ -18087,7 +18087,7 @@ class MenuItem
     closeAll()
     {
         let menu = this.menu
-        GlobalAccelerator.unregisterMenuShortcuts()
+        localAccelerator.unregisterMenuShortcuts()
         while (menu && !menu.applicationMenu)
         {
             if (menu.showing)
@@ -18137,4 +18137,4 @@ class MenuItem
 }
 
 module.exports = MenuItem
-},{"./config":182,"./globalAccelerator":183,"./html":184}]},{},[1]);
+},{"./config":182,"./html":183,"./localAccelerator":184}]},{},[1]);
