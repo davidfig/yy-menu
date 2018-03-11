@@ -1,6 +1,7 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 const Menu = require('../src/menu')
 const MenuItem = Menu.MenuItem
+const LocalAccelerator = Menu.LocalAccelerator
 
 function test()
 {
@@ -51,7 +52,7 @@ function test()
 
     Menu.setApplicationMenu(menu)
 
-    Menu.localAccelerator.register('a', () => console.log('hi'))
+    LocalAccelerator.register('a', () => console.log('hi'))
 }
 
 window.onload = function ()
@@ -17210,15 +17211,15 @@ module.exports = function (options)
 /**
  * Handles all keyboard input for the menu and user-registered keys
  */
-const localAccelerator = {
+const LocalAccelerator = {
 
     init: function()
     {
-        if (!localAccelerator.menuKeys)
+        if (!LocalAccelerator.menuKeys)
         {
-            localAccelerator.menuKeys = {}
-            localAccelerator.keys = {}
-            document.body.addEventListener('keydown', (e) => localAccelerator.keyDown(this, e))
+            LocalAccelerator.menuKeys = {}
+            LocalAccelerator.keys = {}
+            document.body.addEventListener('keydown', (e) => LocalAccelerator.keyDown(LocalAccelerator, e))
         }
     },
 
@@ -17227,7 +17228,7 @@ const localAccelerator = {
      */
     clearKeys: function()
     {
-        localAccelerator.keys = {}
+        LocalAccelerator.keys = {}
     },
 
     /**
@@ -17242,7 +17243,7 @@ const localAccelerator = {
         if (letter)
         {
             const keyCode = (menuItem.menu.applicationMenu ? 'alt+' : '') + letter
-            localAccelerator.menuKeys[localAccelerator.prepareKey(keyCode)] = (e) =>
+            LocalAccelerator.menuKeys[LocalAccelerator.prepareKey(keyCode)] = (e) =>
             {
                 menuItem.handleClick(e)
                 e.stopPropagation()
@@ -17258,13 +17259,13 @@ const localAccelerator = {
      */
     registerMenuSpecial: function(menu)
     {
-        localAccelerator.menuKeys['escape'] = () => menu.closeAll()
-        localAccelerator.menuKeys['enter'] = (e) => menu.enter(e)
-        localAccelerator.menuKeys['space'] = (e) => menu.enter(e)
-        localAccelerator.menuKeys['arrowright'] = (e) => menu.move(e, 'right')
-        localAccelerator.menuKeys['arrowleft'] = (e) => menu.move(e, 'left')
-        localAccelerator.menuKeys['arrowup'] = (e) => menu.move(e, 'up')
-        localAccelerator.menuKeys['arrowdown'] = (e) => menu.move(e, 'down')
+        LocalAccelerator.menuKeys['escape'] = () => menu.closeAll()
+        LocalAccelerator.menuKeys['enter'] = (e) => menu.enter(e)
+        LocalAccelerator.menuKeys['space'] = (e) => menu.enter(e)
+        LocalAccelerator.menuKeys['arrowright'] = (e) => menu.move(e, 'right')
+        LocalAccelerator.menuKeys['arrowleft'] = (e) => menu.move(e, 'left')
+        LocalAccelerator.menuKeys['arrowup'] = (e) => menu.move(e, 'up')
+        LocalAccelerator.menuKeys['arrowdown'] = (e) => menu.move(e, 'down')
     },
 
     /**
@@ -17273,7 +17274,7 @@ const localAccelerator = {
      */
     unregisterMenuShortcuts: function()
     {
-        localAccelerator.menuKeys = {}
+        LocalAccelerator.menuKeys = {}
     },
 
     /**
@@ -17295,7 +17296,7 @@ const localAccelerator = {
      * </pre>
      * For OS-specific codes and a more detailed explanation see {@link https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/code}. Also note that 'Digit' and 'Key' are removed from the code to make it easier to type.
      *
-     * @typedef {string} localAccelerator~KeyCodes
+     * @typedef {string} LocalAccelerator~KeyCodes
      */
 
     /**
@@ -17357,7 +17358,7 @@ const localAccelerator = {
     prettifyKey: function(keyCode)
     {
         let key = ''
-        const codes = localAccelerator.prepareKey(keyCode)
+        const codes = LocalAccelerator.prepareKey(keyCode)
         for (let i = 0; i < codes.length; i++)
         {
             const keyCode = codes[i]
@@ -17390,10 +17391,10 @@ const localAccelerator = {
      */
     register: function(keyCode, callback)
     {
-        const keys = localAccelerator.prepareKey(keyCode)
+        const keys = LocalAccelerator.prepareKey(keyCode)
         for (let key of keys)
         {
-            localAccelerator.keys[key] = (e) =>
+            LocalAccelerator.keys[key] = (e) =>
             {
                 callback(e)
                 e.preventDefault()
@@ -17430,22 +17431,22 @@ const localAccelerator = {
         translate = translate.replace('digit', '')
         translate = translate.replace('key', '')
         keyCode += translate
-        if (localAccelerator.menuKeys[keyCode])
+        if (LocalAccelerator.menuKeys[keyCode])
         {
-            localAccelerator.menuKeys[keyCode](e, this)
+            LocalAccelerator.menuKeys[keyCode](e, LocalAccelerator)
         }
-        else if (localAccelerator.keys[keyCode])
+        else if (LocalAccelerator.keys[keyCode])
         {
-            localAccelerator.keys[keyCode](e, this)
+            LocalAccelerator.keys[keyCode](e, LocalAccelerator)
         }
     }
 }
 
-module.exports = localAccelerator
+module.exports = LocalAccelerator
 },{}],185:[function(require,module,exports){
 const Config =   require('./config')
 const MenuItem = require('./menuItem')
-const localAccelerator = require('./localAccelerator')
+const LocalAccelerator = require('./localAccelerator')
 const html = require('./html')
 
 let _application
@@ -17530,7 +17531,7 @@ class Menu
 
     show(menuItem)
     {
-        Menu.localAccelerator.unregisterMenuShortcuts()
+        Menu.LocalAccelerator.unregisterMenuShortcuts()
         if (this.menu && this.menu.showing === menuItem)
         {
             this.hide()
@@ -17639,13 +17640,13 @@ class Menu
                 const index = child.text.indexOf('&')
                 if (index !== -1)
                 {
-                    Menu.localAccelerator.registerMenuShortcut(child.text[index + 1], child)
+                    Menu.LocalAccelerator.registerMenuShortcut(child.text[index + 1], child)
                 }
             }
         }
         if (!this.applicationMenu)
         {
-            Menu.localAccelerator.registerMenuSpecial(this)
+            Menu.LocalAccelerator.registerMenuSpecial(this)
         }
     }
 
@@ -17659,7 +17660,7 @@ class Menu
 
     closeAll()
     {
-        Menu.localAccelerator.unregisterMenuShortcuts()
+        Menu.LocalAccelerator.unregisterMenuShortcuts()
         let application = _application.menu
         if (application.showing)
         {
@@ -17840,7 +17841,7 @@ class Menu
      */
     static setApplicationMenu(menu)
     {
-        localAccelerator.init()
+        LocalAccelerator.init()
         if (_application)
         {
             _application.remove()
@@ -17886,9 +17887,9 @@ class Menu
      * localAccelerator definition
      * @type {Accelerator}
      */
-    static get localAccelerator()
+    static get LocalAccelerator()
     {
-        return localAccelerator
+        return LocalAccelerator
     }
 
     /**

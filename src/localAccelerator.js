@@ -1,15 +1,15 @@
 /**
  * Handles all keyboard input for the menu and user-registered keys
  */
-const localAccelerator = {
+const LocalAccelerator = {
 
     init: function()
     {
-        if (!localAccelerator.menuKeys)
+        if (!LocalAccelerator.menuKeys)
         {
-            localAccelerator.menuKeys = {}
-            localAccelerator.keys = {}
-            document.body.addEventListener('keydown', (e) => localAccelerator.keyDown(this, e))
+            LocalAccelerator.menuKeys = {}
+            LocalAccelerator.keys = {}
+            document.body.addEventListener('keydown', (e) => LocalAccelerator.keyDown(LocalAccelerator, e))
         }
     },
 
@@ -18,7 +18,7 @@ const localAccelerator = {
      */
     clearKeys: function()
     {
-        localAccelerator.keys = {}
+        LocalAccelerator.keys = {}
     },
 
     /**
@@ -33,7 +33,7 @@ const localAccelerator = {
         if (letter)
         {
             const keyCode = (menuItem.menu.applicationMenu ? 'alt+' : '') + letter
-            localAccelerator.menuKeys[localAccelerator.prepareKey(keyCode)] = (e) =>
+            LocalAccelerator.menuKeys[LocalAccelerator.prepareKey(keyCode)] = (e) =>
             {
                 menuItem.handleClick(e)
                 e.stopPropagation()
@@ -49,13 +49,13 @@ const localAccelerator = {
      */
     registerMenuSpecial: function(menu)
     {
-        localAccelerator.menuKeys['escape'] = () => menu.closeAll()
-        localAccelerator.menuKeys['enter'] = (e) => menu.enter(e)
-        localAccelerator.menuKeys['space'] = (e) => menu.enter(e)
-        localAccelerator.menuKeys['arrowright'] = (e) => menu.move(e, 'right')
-        localAccelerator.menuKeys['arrowleft'] = (e) => menu.move(e, 'left')
-        localAccelerator.menuKeys['arrowup'] = (e) => menu.move(e, 'up')
-        localAccelerator.menuKeys['arrowdown'] = (e) => menu.move(e, 'down')
+        LocalAccelerator.menuKeys['escape'] = () => menu.closeAll()
+        LocalAccelerator.menuKeys['enter'] = (e) => menu.enter(e)
+        LocalAccelerator.menuKeys['space'] = (e) => menu.enter(e)
+        LocalAccelerator.menuKeys['arrowright'] = (e) => menu.move(e, 'right')
+        LocalAccelerator.menuKeys['arrowleft'] = (e) => menu.move(e, 'left')
+        LocalAccelerator.menuKeys['arrowup'] = (e) => menu.move(e, 'up')
+        LocalAccelerator.menuKeys['arrowdown'] = (e) => menu.move(e, 'down')
     },
 
     /**
@@ -64,7 +64,7 @@ const localAccelerator = {
      */
     unregisterMenuShortcuts: function()
     {
-        localAccelerator.menuKeys = {}
+        LocalAccelerator.menuKeys = {}
     },
 
     /**
@@ -86,7 +86,7 @@ const localAccelerator = {
      * </pre>
      * For OS-specific codes and a more detailed explanation see {@link https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/code}. Also note that 'Digit' and 'Key' are removed from the code to make it easier to type.
      *
-     * @typedef {string} localAccelerator~KeyCodes
+     * @typedef {string} LocalAccelerator~KeyCodes
      */
 
     /**
@@ -148,7 +148,7 @@ const localAccelerator = {
     prettifyKey: function(keyCode)
     {
         let key = ''
-        const codes = localAccelerator.prepareKey(keyCode)
+        const codes = LocalAccelerator.prepareKey(keyCode)
         for (let i = 0; i < codes.length; i++)
         {
             const keyCode = codes[i]
@@ -181,10 +181,10 @@ const localAccelerator = {
      */
     register: function(keyCode, callback)
     {
-        const keys = localAccelerator.prepareKey(keyCode)
+        const keys = LocalAccelerator.prepareKey(keyCode)
         for (let key of keys)
         {
-            localAccelerator.keys[key] = (e) =>
+            LocalAccelerator.keys[key] = (e) =>
             {
                 callback(e)
                 e.preventDefault()
@@ -221,15 +221,15 @@ const localAccelerator = {
         translate = translate.replace('digit', '')
         translate = translate.replace('key', '')
         keyCode += translate
-        if (localAccelerator.menuKeys[keyCode])
+        if (LocalAccelerator.menuKeys[keyCode])
         {
-            localAccelerator.menuKeys[keyCode](e, this)
+            LocalAccelerator.menuKeys[keyCode](e, LocalAccelerator)
         }
-        else if (localAccelerator.keys[keyCode])
+        else if (LocalAccelerator.keys[keyCode])
         {
-            localAccelerator.keys[keyCode](e, this)
+            LocalAccelerator.keys[keyCode](e, LocalAccelerator)
         }
     }
 }
 
-module.exports = localAccelerator
+module.exports = LocalAccelerator

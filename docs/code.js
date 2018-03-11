@@ -1,5 +1,6 @@
 const Menu = require('../src/menu')
 const MenuItem = Menu.MenuItem
+const LocalAccelerator = Menu.LocalAccelerator
 
 function test()
 {
@@ -50,7 +51,7 @@ function test()
 
     Menu.setApplicationMenu(menu)
 
-    Menu.localAccelerator.register('a', () => console.log('hi'))
+    LocalAccelerator.register('a', () => console.log('hi'))
 }
 
 window.onload = function ()

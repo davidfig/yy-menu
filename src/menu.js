@@ -1,6 +1,6 @@
 const Config =   require('./config')
 const MenuItem = require('./menuItem')
-const localAccelerator = require('./localAccelerator')
+const LocalAccelerator = require('./localAccelerator')
 const html = require('./html')
 
 let _application
@@ -85,7 +85,7 @@ class Menu
 
     show(menuItem)
     {
-        Menu.localAccelerator.unregisterMenuShortcuts()
+        Menu.LocalAccelerator.unregisterMenuShortcuts()
         if (this.menu && this.menu.showing === menuItem)
         {
             this.hide()
@@ -194,13 +194,13 @@ class Menu
                 const index = child.text.indexOf('&')
                 if (index !== -1)
                 {
-                    Menu.localAccelerator.registerMenuShortcut(child.text[index + 1], child)
+                    Menu.LocalAccelerator.registerMenuShortcut(child.text[index + 1], child)
                 }
             }
         }
         if (!this.applicationMenu)
         {
-            Menu.localAccelerator.registerMenuSpecial(this)
+            Menu.LocalAccelerator.registerMenuSpecial(this)
         }
     }
 
@@ -214,7 +214,7 @@ class Menu
 
     closeAll()
     {
-        Menu.localAccelerator.unregisterMenuShortcuts()
+        Menu.LocalAccelerator.unregisterMenuShortcuts()
         let application = _application.menu
         if (application.showing)
         {
@@ -395,7 +395,7 @@ class Menu
      */
     static setApplicationMenu(menu)
     {
-        localAccelerator.init()
+        LocalAccelerator.init()
         if (_application)
         {
             _application.remove()
@@ -441,9 +441,9 @@ class Menu
      * localAccelerator definition
      * @type {Accelerator}
      */
-    static get localAccelerator()
+    static get LocalAccelerator()
     {
-        return localAccelerator
+        return LocalAccelerator
     }
 
     /**
