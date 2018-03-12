@@ -237,7 +237,7 @@ class Menu
             {
                 menu.showing.div.style.background = 'transparent'
                 menu.showing = null
-                menu.showAccelerators()
+                menu.hideAccelerators()
             }
         }
     }
@@ -390,6 +390,25 @@ class Menu
     }
 
     /**
+     * show application menu accelerators when alt is pressed
+     * @private
+     */
+    showApplicationAccelerators()
+    {
+        this.hideAccelerators()
+        LocalAccelerator.registerAlt(() =>
+        {
+            if (!this.showing)
+            {
+                this.showAccelerators()
+            }
+        }, () =>
+        {
+            this.hideAccelerators()
+        })
+    }
+
+    /**
      * sets active application Menu (and removes any existing application menus)
      * @param {Menu} menu
      */
@@ -434,7 +453,7 @@ class Menu
                 menu.closeAll()
             }
         })
-        menu.showAccelerators()
+        menu.showApplicationAccelerators()
     }
 
     /**

@@ -188,7 +188,7 @@ class MenuItem
         {
             menu.showing.div.style.background = 'transparent'
             menu.showing = null
-            menu.showAccelerators()
+            menu.hideAccelerators()
         }
     }
 
@@ -203,6 +203,10 @@ class MenuItem
             }
             this.submenu.show(this)
             this.div.style.backgroundColor = Config.SelectedBackgroundStyle
+            if (this.menu.applicationMenu && document.activeElement !== this.div)
+            {
+                this.menu.div.focus()
+            }
         }
         else if (this.type === 'checkbox')
         {

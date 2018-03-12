@@ -17223,7 +17223,8 @@ const LocalAccelerator = {
         {
             LocalAccelerator.menuKeys = {}
             LocalAccelerator.keys = {}
-            document.body.addEventListener('keydown', (e) => LocalAccelerator.keyDown(LocalAccelerator, e))
+            document.body.addEventListener('keydown', (e) => LocalAccelerator.keydown(LocalAccelerator, e))
+            document.body.addEventListener('keyup', (e) => LocalAccelerator.keyup(LocalAccelerator, e))
         }
     },
 
@@ -17270,6 +17271,17 @@ const LocalAccelerator = {
         LocalAccelerator.menuKeys['arrowleft'] = (e) => menu.move(e, 'left')
         LocalAccelerator.menuKeys['arrowup'] = (e) => menu.move(e, 'up')
         LocalAccelerator.menuKeys['arrowdown'] = (e) => menu.move(e, 'down')
+    },
+
+    /**
+     * special key registration for alt
+     * @param {function} pressed
+     * @param {function} released
+     * @private
+     */
+    registerAlt: function (pressed, released)
+    {
+        LocalAccelerator.alt = { pressed, released }
     },
 
     /**
@@ -17408,8 +17420,23 @@ const LocalAccelerator = {
         }
     },
 
-    keyDown: function(accelerator, e)
+    keyup: function (accelerator, e)
     {
+        if (LocalAccelerator.alt && (e.code === 'AltLeft' || e.code === 'AltRight'))
+        {
+            LocalAccelerator.alt.released()
+            LocalAccelerator.alt.isPressed = false
+        }
+    },
+
+    keydown: function(accelerator, e)
+    {
+        if (LocalAccelerator.alt && !LocalAccelerator.alt.isPressed && (e.code === 'AltLeft' || e.code === 'AltRight'))
+        {
+            LocalAccelerator.alt.pressed()
+            LocalAccelerator.alt.isPressed = true
+            e.preventDefault()
+        }
         const modifiers = []
         if (e.altKey)
         {
@@ -17688,7 +17715,7 @@ class Menu
             {
                 menu.showing.div.style.background = 'transparent'
                 menu.showing = null
-                menu.showAccelerators()
+                menu.hideAccelerators()
             }
         }
     }
@@ -17841,6 +17868,25 @@ class Menu
     }
 
     /**
+     * show application menu accelerators when alt is pressed
+     * @private
+     */
+    showApplicationAccelerators()
+    {
+        this.hideAccelerators()
+        LocalAccelerator.registerAlt(() =>
+        {
+            if (!this.showing)
+            {
+                this.showAccelerators()
+            }
+        }, () =>
+        {
+            this.hideAccelerators()
+        })
+    }
+
+    /**
      * sets active application Menu (and removes any existing application menus)
      * @param {Menu} menu
      */
@@ -17885,7 +17931,7 @@ class Menu
                 menu.closeAll()
             }
         })
-        menu.showAccelerators()
+        menu.showApplicationAccelerators()
     }
 
     /**
@@ -18108,7 +18154,7 @@ class MenuItem
         {
             menu.showing.div.style.background = 'transparent'
             menu.showing = null
-            menu.showAccelerators()
+            menu.hideAccelerators()
         }
     }
 
@@ -18123,6 +18169,10 @@ class MenuItem
             }
             this.submenu.show(this)
             this.div.style.backgroundColor = Config.SelectedBackgroundStyle
+            if (this.menu.applicationMenu && document.activeElement !== this.div)
+            {
+                this.menu.div.focus()
+            }
         }
         else if (this.type === 'checkbox')
         {
