@@ -203,10 +203,11 @@ class MenuItem
             }
             this.submenu.show(this)
             this.div.style.backgroundColor = Config.SelectedBackgroundStyle
-            if (this.menu.applicationMenu && document.activeElement !== this.div)
+            if (typeof e.keyCode !== 'undefined' && this.menu.applicationMenu && document.activeElement !== this.menu.div)
             {
                 this.menu.div.focus()
             }
+            e.preventDefault()
         }
         else if (this.type === 'checkbox')
         {
