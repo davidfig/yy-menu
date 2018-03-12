@@ -17313,7 +17313,8 @@ const LocalAccelerator = {
     {
         const keys = []
         let split
-        if (keyCode.indexOf('|') !== -1)
+        keyCode += ''
+        if (keyCode.length > 1 && keyCode.indexOf('|') !== -1)
         {
             split = keyCode.split('|')
         }
