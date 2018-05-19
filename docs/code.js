@@ -61,6 +61,6 @@ function test()
 window.onload = function ()
 {
     test()
-    require('fork-me-github')('https://github.com/davidfig/menu')
+    require('fork-me-github')()
     require('./highlight')()
 }

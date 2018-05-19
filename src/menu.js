@@ -161,6 +161,7 @@ class Menu
             {
                 this.div.style.top = window.innerHeight - this.div.offsetHeight + 'px'
             }
+            _application.menu.div.focus()
         }
     }
 
