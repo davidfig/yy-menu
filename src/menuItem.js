@@ -57,13 +57,13 @@ class MenuItem
         if (!this.submenu || this.menu.showing !== this )
         {
             this.div.style.backgroundColor = Config.SelectedBackgroundStyle
-            if (this.submenu && !this.menu.applicationMenu)
+            if (this.submenu && (!this.menu.applicationMenu || this.menu.showing))
             {
                 this.submenuTimeout = setTimeout(() =>
                 {
                     this.submenuTimeout = null
                     this.submenu.show(this)
-                }, Config.SubmenuOpenDelay)
+                }, this.menu.applicationMenu ? 0 : Config.SubmenuOpenDelay)
             }
         }
     }
